@@ -30,29 +30,39 @@
   }
   
   // Function to handle file upload
-  async function handleUpload(event) {
-    // console.log("hellooooooooooooo");a
-    const files = event.target.files;
-    const formData = new FormData();
+  async function handleUpload() {
+    const input = document.querySelector(".upload");
+    const files = input.files;
 
+    if (files.length === 0) {
+      alert("Please select files to upload.");
+      return;
+    }
+
+    const formData = new FormData();
     for (let file of files) {
       formData.append("images", file);
     }
 
-    // Send files to the backend
-    const response = await fetch("http://localhost:3000/upload", {
-      method: "POST",
-      body: formData
-    });
-
-    const result = await response.json();
-    if (response.ok) {
-      // Update the images list with newly uploaded images
-      result.files.forEach(file => {
-        images = [...images, `/uploads/${file.filename}`]; // Update with file URL
+    try {
+      const response = await fetch("http://localhost:3000/upload", {
+        method: "POST",
+        body: formData
       });
-    } else {
-      alert("Upload failed!");
+
+      const result = await response.json();
+
+      if (response.ok) {
+        images = [...images, ...result.files.map(file => `/uploads/${file.filename}`)];
+        
+        // Clear the file input
+        input.value = "";
+      } else {
+        alert("Upload failed!");
+      }
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      alert("An error occurred while uploading.");
     }
   }
 
@@ -106,7 +116,8 @@
 </style>
 
 <!-- File input for uploading images -->
-<input class="upload" type="file" multiple accept="image/*" on:change={handleUpload} />
+<input class="upload" type="file" multiple accept="image/*" />
+<button on:click={handleUpload}>Upload</button>
 
 <!-- Display uploaded images in a grid -->
 <div class="gallery">
