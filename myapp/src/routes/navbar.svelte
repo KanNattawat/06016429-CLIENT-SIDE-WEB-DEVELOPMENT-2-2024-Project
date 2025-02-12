@@ -3,6 +3,7 @@
     <div class="search-box">
         <input type="text" placeholder="Search">
         <button>Search</button>
+        <a href="/upload"><button>Upload</button></a>
     </div>
 </nav>
 

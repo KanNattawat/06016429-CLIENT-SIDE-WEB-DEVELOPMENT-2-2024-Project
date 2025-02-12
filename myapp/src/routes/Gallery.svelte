@@ -21,39 +21,39 @@
 
   onMount(fetchImages);
 
-  async function handleUpload() {
-    const input = document.querySelector(".upload");
-    const files = input.files;
+  // async function handleUpload() {
+  //   const input = document.querySelector(".upload");
+  //   const files = input.files;
 
-    if (files.length === 0) {
-      alert("Please select files to upload.");
-      return;
-    }
+  //   if (files.length === 0) {
+  //     alert("Please select files to upload.");
+  //     return;
+  //   }
 
-    const formData = new FormData();
-    for (let file of files) {
-      formData.append("images", file);
-    }
+  //   const formData = new FormData();
+  //   for (let file of files) {
+  //     formData.append("images", file);
+  //   }
 
-    try {
-      const response = await fetch("http://localhost:3000/upload", {
-        method: "POST",
-        body: formData
-      });
+  //   try {
+  //     const response = await fetch("http://localhost:3000/upload", {
+  //       method: "POST",
+  //       body: formData
+  //     });
 
-      const result = await response.json();
+  //     const result = await response.json();
 
-      if (response.ok) {
-        images = [...images, ...result.files.map(file => ({ id: file.id, url: file.filepath }))];
-        input.value = "";
-      } else {
-        alert("Upload failed!");
-      }
-    } catch (error) {
-      console.error("Error uploading files:", error);
-      alert("An error occurred while uploading.");
-    }
-  }
+  //     if (response.ok) {
+  //       images = [...images, ...result.files.map(file => ({ id: file.id, url: file.filepath }))];
+  //       input.value = "";
+  //     } else {
+  //       alert("Upload failed!");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error uploading files:", error);
+  //     alert("An error occurred while uploading.");
+  //   }
+  // }
 
   async function deleteImage(id) {
     if (!confirm("Are you sure you want to delete this image?")) return;
@@ -128,9 +128,6 @@
     border-radius: 5px;
   }
 </style>
-
-<input class="upload" type="file" multiple accept="image/*" />
-<button on:click={handleUpload}>Upload</button>
 
 <div class="gallery">
   {#each images as img (img.id)}
