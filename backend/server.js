@@ -43,10 +43,12 @@ app.use(express.json());
 // Create database table if not exists
 async function initializeDatabase() {
   const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS uploads (
+    CREATE TABLE IF NOT EXISTS images (
       id SERIAL PRIMARY KEY,
       filename TEXT NOT NULL,
       filepath TEXT NOT NULL,
+      name TEXT,
+      description TEXT,
       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
@@ -82,7 +84,7 @@ app.post(
       }));
 
       const insertQuery =
-        "INSERT INTO uploads (filename, filepath, name, description) VALUES ($1, $2, $3, $4) RETURNING *";
+        "INSERT INTO images (filename, filepath, name, description) VALUES ($1, $2, $3, $4) RETURNING *";
 
       const uploadedFiles = [];
       for (const file of fileRecords) {
@@ -106,7 +108,7 @@ app.post(
 // Get list of uploaded files from PostgreSQL
 app.get("/files", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM uploads ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images ORDER BY uploaded_at DESC");
     res.status(200).json({ files: result.rows });
   } catch (error) {
     console.error("Error fetching files:", error);
@@ -125,7 +127,7 @@ app.delete("/delete/:id", async (req, res) => {
     const { id } = req.params;
 
     // Find the file in the database
-    const result = await pool.query("SELECT * FROM uploads WHERE id = $1", [id]);
+    const result = await pool.query("SELECT * FROM images WHERE id = $1", [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "File not found" });
@@ -140,7 +142,7 @@ app.delete("/delete/:id", async (req, res) => {
     });
 
     // Remove the record from PostgreSQL
-    await pool.query("DELETE FROM uploads WHERE id = $1", [id]);
+    await pool.query("DELETE FROM images WHERE id = $1", [id]);
 
     res.json({ message: "File deleted successfully", id });
 
