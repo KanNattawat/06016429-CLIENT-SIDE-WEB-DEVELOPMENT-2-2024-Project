@@ -54,34 +54,54 @@ async function initializeDatabase() {
 }
 initializeDatabase();
 
-// Handle file upload and store metadata in PostgreSQL
-app.post("/upload", upload.array("images", 10), async (req, res) => {
-  try {
-    const files = req.files;
-    if (!files) {
-      return res.status(400).json({ message: "No files uploaded" });
+app.post(
+  "/upload",
+  upload.fields([{ name: "images", maxCount: 10 }, { name: "filename" }, { name: "description" }]),
+  async (req, res) => {
+    console.log("Received files:", req.files);
+    console.log("Received body:", req.body);
+    // Log body parameters (filename, description).
+    try {
+      const files = req.files["images"]; // Extract files
+      const fileNames = req.body.filename; // Extract names from body
+      const descrip = req.body.description;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      // Ensure fileNames is an array (it can be a single string if only one file is uploaded)
+      const nameArray = Array.isArray(fileNames) ? fileNames : [fileNames];
+      const desArray = Array.isArray(descrip) ? descrip : [descrip];
+
+      const fileRecords = files.map((file, index) => ({
+        filename: file.filename,
+        filepath: `/uploads/${file.filename}`,
+        name: nameArray[index] || file.originalname, // Use user input or fallback to original filename
+        description: desArray[index] || ""
+      }));
+
+      const insertQuery =
+        "INSERT INTO uploads (filename, filepath, name, description) VALUES ($1, $2, $3, $4) RETURNING *";
+
+      const uploadedFiles = [];
+      for (const file of fileRecords) {
+        const result = await pool.query(insertQuery, [
+          file.filename,
+          file.filepath,
+          file.name,
+          file.description,
+        ]);
+        uploadedFiles.push(result.rows[0]);
+      }
+
+      res.json({ message: "Files uploaded successfully", files: uploadedFiles });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-
-    const fileRecords = files.map((file) => ({
-      filename: file.filename,
-      filepath: `/uploads/${file.filename}`,
-    }));
-
-    const insertQuery =
-      "INSERT INTO uploads (filename, filepath) VALUES ($1, $2) RETURNING *";
-
-    const uploadedFiles = [];
-    for (const file of fileRecords) {
-      const result = await pool.query(insertQuery, [file.filename, file.filepath]);
-      uploadedFiles.push(result.rows[0]);
-    }
-
-    res.json({ message: "Files uploaded successfully", files: uploadedFiles });
-  } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ message: "Internal server error" });
   }
-});
+);
 
 // Get list of uploaded files from PostgreSQL
 app.get("/files", async (req, res) => {
