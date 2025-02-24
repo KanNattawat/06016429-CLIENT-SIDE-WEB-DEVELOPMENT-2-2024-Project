@@ -151,3 +151,50 @@ app.delete("/delete/:id", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Create database table for comments if not exists
+async function initializeCommentsTable() {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS comments (
+      id SERIAL PRIMARY KEY,
+      image_id INT REFERENCES images(id) ON DELETE CASCADE,
+      comment TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+  await pool.query(createTableQuery);
+}
+initializeCommentsTable();
+
+// API endpoint to upload a comment for an image
+app.post("/comment", async (req, res) => {
+  try {
+    const { image_id, comment } = req.body;
+    
+    if (!image_id || !comment) {
+      return res.status(400).json({ message: "Image ID and comment are required" });
+    }
+    
+    const insertQuery = "INSERT INTO comments (image_id, comment) VALUES ($1, $2) RETURNING *";
+    const result = await pool.query(insertQuery, [image_id, comment]);
+    
+    res.status(201).json({ message: "Comment added successfully", comment: result.rows[0] });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// API endpoint to get comments for a specific image
+app.get("/comments/:image_id", async (req, res) => {
+  try {
+    const { image_id } = req.params;
+    
+    const result = await pool.query("SELECT * FROM comments WHERE image_id = $1 ORDER BY created_at DESC", [image_id]);
+    
+    res.status(200).json({ comments: result.rows });
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});

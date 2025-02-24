@@ -19,6 +19,7 @@
 	"description": "Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).",
 	"main": "svelte.config.js",
 	"dependencies": {
+		"@tailwindcss/vite": "^4.0.8",
 		"acorn": "^8.14.0",
 		"acorn-typescript": "^1.4.13",
 		"aria-query": "^5.3.2",
@@ -49,6 +50,7 @@
 		"set-cookie-parser": "^2.7.1",
 		"sirv": "^3.0.0",
 		"source-map-js": "^1.2.1",
+		"tailwindcss": "^4.0.8",
 		"totalist": "^3.0.1",
 		"vitefu": "^1.0.5",
 		"zimmerframe": "^1.1.2"
