@@ -7,6 +7,7 @@
   let commentText = "";
   let comments = [];
 
+  // Fetch images when the component mounts
   onMount(fetchImages);
 
   async function fetchImages() {
@@ -19,6 +20,7 @@
           url: file.filepath,
           name: file.name,
           description: file.description,
+          category: file.category || "Uncategorized", // Directly using category as a string
         }));
       } else {
         alert("Failed to fetch images!");
@@ -61,8 +63,8 @@
     }
   }
 
-  function openImage(url, id, name, description) {
-    selectedImage = { url, id, name, description };
+  function openImage(url, id, name, description, category) {
+    selectedImage = { url, id, name, description, category };
     selectedImageId = id;
     fetchComments(id);
   }
@@ -75,7 +77,7 @@
 
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-5">
   {#each images as img (img.id)}
-    <div class="cursor-pointer transition-transform transform hover:scale-105" on:click={() => openImage(img.url, img.id, img.name, img.description)}>
+    <div class="cursor-pointer transition-transform transform hover:scale-105" on:click={() => openImage(img.url, img.id, img.name, img.description, img.category)}>
       <img class="w-full h-auto rounded-lg" src={img.url} alt="Uploaded image" />
     </div>
   {/each}
@@ -87,6 +89,9 @@
     <img class="max-w-[90%] max-h-[70vh] mt-4" src={selectedImage.url} alt="Preview" />
     <div class="bg-white rounded-lg w-[90%] p-5 mt-5">
       <h3 class="text-xl font-bold text-black">{selectedImage.name}</h3>
+      <p class="text-sm text-gray-600">
+        Category: <span class="font-semibold">{selectedImage.category}</span>
+      </p>      
       <hr class="my-4" />
       <p class="text-black leading-relaxed">{selectedImage.description}</p>
       <div class="mt-5">

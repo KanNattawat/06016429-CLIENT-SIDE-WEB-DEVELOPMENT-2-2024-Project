@@ -1,51 +1,13 @@
-<nav class="navbar">
-    <h1>Pesterin</h1>
-    <div class="search-box">
-        <input type="text" placeholder="Search">
-        <button>Search</button>
-        <a href="/upload"><button>Upload</button></a>
+<nav class="flex items-center justify-between bg-gray-800 p-4 text-white">
+    <h1 class="text-2xl font-bold">Pesterin</h1>
+    <div class="flex items-center space-x-2">
+        <!-- <input type="text" placeholder="Search" class="px-3 py-2 rounded-l-md border-none outline-none"> -->
+        <!-- <button class="px-4 py-2 bg-gray-600 text-white rounded-r-md hover:bg-gray-700">Search</button> -->
+        <a href="/upload">
+            <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Upload Image</button>
+        </a>
+        <a href="">
+            <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Category</button>
+        </a>
     </div>
 </nav>
-
-<style>
-    /* Navbar Styling */
-    .navbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: #333;
-        padding: 10px 20px;
-        color: white;
-    }
-
-    .navbar h1 {
-        margin: 0;
-        font-size: 24px;
-    }
-
-    /* Group input & button together */
-    .search-box {
-        display: flex;
-        align-items: center;
-    }
-
-    .search-box input {
-        padding: 8px;
-        border: none;
-        border-radius: 5px 0 0 5px;
-        outline: none;
-    }
-
-    .search-box button {
-        padding: 8px 12px;
-        border: none;
-        background-color: #555;
-        color: white;
-        border-radius: 0 5px 5px 0;
-        cursor: pointer;
-    }
-
-    .search-box button:hover {
-        background-color: #777;
-    }
-</style>
