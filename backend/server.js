@@ -1,4 +1,7 @@
 const express = require("express");
+const session = require("express-session");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy; 
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -10,6 +13,81 @@ dotenv.config();
 
 const app = express();
 const port = 3000;
+
+// Cors Middleware
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization",
+};
+app.use(cors(corsOptions));
+
+// Express middleware
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, httpOnly: true, sameSite: "lax" },
+  })
+);
+
+// Init passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// OAuth API
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.BASE_URL}/auth/google/callback`,
+    },
+    (accessToken, refreshToken, profile, done) => {
+      console.log("User profile:", profile);
+      return done(null, profile);
+    }
+  )
+);
+
+// Serialize user info into session
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+// Deserialize user from session
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+// Route to initiate Google OAuth
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/" }), (req, res) => {
+  req.session.user = {
+    picture: req.user.photos[0].value,
+    name: req.user.displayName,
+    email: req.user.emails[0].value,
+  };
+  res.redirect("http://localhost:5173");
+});
+
+// Fetch user's data
+app.get("/auth/user", (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ message: "Unauthorized", user: null });
+  }
+  res.json({ user: req.session.user });
+});
+
+// Logout route
+app.get("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) return next(err);
+    res.redirect("http://localhost:5173/");
+  });
+});
 
 // PostgreSQL database connection
 const pool = new pg.Pool({
@@ -37,7 +115,6 @@ const upload = multer({ storage: storage });
 
 // Serve static files
 app.use("/uploads", express.static(uploadDir));
-app.use(cors());
 app.use(express.json());
 
 // Create images table with a category column
