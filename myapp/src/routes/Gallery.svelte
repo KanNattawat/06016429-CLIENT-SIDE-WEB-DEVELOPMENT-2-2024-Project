@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation"; // Import goto for navigation
 
   let images = [];
   let selectedImage = null;
@@ -20,7 +21,7 @@
           url: file.filepath,
           name: file.name,
           description: file.description,
-          category: file.category || "Uncategorized", // Directly using category as a string
+          category: file.category || "Uncategorized",
         }));
       } else {
         alert("Failed to fetch images!");
@@ -63,15 +64,45 @@
     }
   }
 
+  async function handleDeleteImage() {
+    if (!selectedImageId) return;
+    
+    const confirmDelete = confirm("Are you sure you want to delete this image?");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`http://localhost:3000/image/${selectedImageId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        images = images.filter((img) => img.id !== selectedImageId);
+        closePreview();
+      } else {
+        alert("Failed to delete image!");
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    }
+  }
+
+  function handleEditImage() {
+    if (selectedImageId) {
+      goto(`/edit_img/${selectedImageId}`); // Navigate to the edit page
+    }
+  }
+
   function openImage(url, id, name, description, category) {
     selectedImage = { url, id, name, description, category };
     selectedImageId = id;
     fetchComments(id);
+    document.getElementById("naver").style.visibility = "hidden";
   }
 
   function closePreview() {
     selectedImage = null;
     selectedImageId = null;
+    document.getElementById("naver").style.visibility = "visible";
   }
 </script>
 
@@ -84,24 +115,44 @@
 </div>
 
 {#if selectedImage}
-  <div class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center p-5 overflow-auto">
-    <button class="mt-4 px-4 py-2 bg-red-500 text-white rounded" on:click={closePreview}>Close Preview</button>
-    <img class="max-w-[90%] max-h-[70vh] mt-4" src={selectedImage.url} alt="Preview" />
-    <div class="bg-white rounded-lg w-[90%] p-5 mt-5">
-      <h3 class="text-xl font-bold text-black">{selectedImage.name}</h3>
-      <p class="text-sm text-gray-600">
-        Category: <span class="font-semibold">{selectedImage.category}</span>
+<div class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center p-5 overflow-auto">
+  <!-- <button class="absolute top-5 right-5 px-4 py-2 bg-black text-white rounded" on:click={closePreview}>
+    Close
+  </button> -->
+  <p class="absolute top-5 right-5 bg-black text-white rounded cursor-pointer" on:click={closePreview}>Close</p>
+  <img class="max-w-[90%] max-h-[70vh] mt-4" src={selectedImage.url} alt="Preview" />
+  <div class="bg-gray-900 text-white rounded-lg w-[100%] p-5 mt-5">
+      <h3 class="text-xl font-bold">{selectedImage.name}</h3>
+      <p class="text-sm text-gray-300">
+          Category <span class="font-semibold">{selectedImage.category}</span>
       </p>      
-      <hr class="my-4" />
-      <p class="text-black leading-relaxed">{selectedImage.description}</p>
-      <div class="mt-5">
-        <h3 class="text-lg font-semibold text-black">Comments</h3>
-        {#each comments as comment}
-          <p class="text-black mt-2">{comment.comment}</p>
-        {/each}
+      <hr class="my-4 border-gray-600" />
+      <p class="leading-relaxed">{selectedImage.description}</p>
+
+      <!-- Edit and Delete Buttons -->
+      <div class="mt-4 flex gap-4">
+          <button class="px-4 py-2 bg-yellow-500 text-white rounded" on:click={handleEditImage}>
+              Edit Image
+          </button>
+          <button class="px-4 py-2 bg-red-600 text-white rounded" on:click={handleDeleteImage}>
+              Delete Image
+          </button>
       </div>
-      <textarea class="w-full p-2 mt-3 border rounded" bind:value={commentText} placeholder="Add comment ..."></textarea>
-      <button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded" on:click={handleAddComment}>Add Comment</button>
-    </div>
+
+      <div class="mt-5">
+          <h3 class="text-lg font-semibold">Comments</h3>
+          {#each comments as comment}
+              <p class="mt-2">{comment.comment}</p>
+          {/each}
+      </div>
+      <textarea class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400" 
+                bind:value={commentText} 
+                placeholder="Add comment ..."></textarea>
+                <br>
+      <button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded" on:click={handleAddComment}>
+          Add Comment
+      </button>
   </div>
+</div>
+
 {/if}

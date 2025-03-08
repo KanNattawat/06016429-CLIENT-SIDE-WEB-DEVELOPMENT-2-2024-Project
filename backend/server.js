@@ -40,7 +40,7 @@ app.use("/uploads", express.static(uploadDir));
 app.use(cors());
 app.use(express.json());
 
-// Create images table with a category column
+// Create database tables if not exist
 async function initializeDatabase() {
   const createImagesTableQuery = `
     CREATE TABLE IF NOT EXISTS images (
@@ -54,8 +54,56 @@ async function initializeDatabase() {
     );
   `;
   await pool.query(createImagesTableQuery);
+
+  const createCategoriesTableQuery = `
+    CREATE TABLE IF NOT EXISTS categories (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE
+    );
+  `;
+  await pool.query(createCategoriesTableQuery);
+
+  const createCommentsTableQuery = `
+    CREATE TABLE IF NOT EXISTS comments (
+      id SERIAL PRIMARY KEY,
+      image_id INT REFERENCES images(id) ON DELETE CASCADE,
+      comment TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+  await pool.query(createCommentsTableQuery);
 }
 initializeDatabase();
+
+// API endpoint to create a category
+app.post("/category", async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+
+    const insertQuery = "INSERT INTO categories (name) VALUES ($1) RETURNING *";
+    const result = await pool.query(insertQuery, [name]);
+
+    res.status(201).json({ message: "Category created successfully", category: result.rows[0] });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// API endpoint to get all categories
+app.get("/categories", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM categories ORDER BY name");
+    res.status(200).json({ categories: result.rows });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ message: "Error fetching categories" });
+  }
+});
 
 // API endpoint to upload images with categories
 app.post(
@@ -69,7 +117,7 @@ app.post(
       const files = req.files["images"];
       const fileNames = req.body.filename;
       const descrip = req.body.description;
-      const category = req.body.category;
+      const categoryId = req.body.category;
 
       if (!files || files.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
@@ -77,13 +125,14 @@ app.post(
 
       const nameArray = Array.isArray(fileNames) ? fileNames : [fileNames];
       const desArray = Array.isArray(descrip) ? descrip : [descrip];
+      const cateArray = Array.isArray(categoryId) ? categoryId : [categoryId];
 
       const fileRecords = files.map((file, index) => ({
         filename: file.filename,
         filepath: `/uploads/${file.filename}`,
         name: nameArray[index] || file.originalname,
         description: desArray[index] || "",
-        category: category || null,
+        category: cateArray[index] || null
       }));
 
       const insertQuery =
@@ -96,7 +145,7 @@ app.post(
           file.filepath,
           file.name,
           file.description,
-          file.category,
+          file.category
         ]);
         uploadedFiles.push(result.rows[0]);
       }
@@ -109,12 +158,43 @@ app.post(
   }
 );
 
-// API endpoint to get images by category
-app.get("/images/category/:category", async (req, res) => {
+// API endpoint to update image category
+app.put("/image/:id/category", async (req, res) => {
   try {
-    const { category } = req.params;
+    const { id } = req.params;
+    const { category_id } = req.body;
+
+    if (!category_id) {
+      return res.status(400).json({ message: "Category ID is required" });
+    }
+
+    // Check if the category exists
+    const categoryResult = await pool.query("SELECT * FROM categories WHERE id = $1", [category_id]);
+    if (categoryResult.rows.length === 0) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    // Update the image's category
+    const updateQuery = "UPDATE images SET category_id = $1 WHERE id = $2 RETURNING *";
+    const result = await pool.query(updateQuery, [category_id, id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    res.status(200).json({ message: "Image category updated successfully", image: result.rows[0] });
+  } catch (error) {
+    console.error("Error updating image category:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// API endpoint to get images by category
+app.get("/images/category/:category_id", async (req, res) => {
+  try {
+    const { category_id } = req.params;
     
-    const result = await pool.query("SELECT * FROM images WHERE category = $1 ORDER BY uploaded_at DESC", [category]);
+    const result = await pool.query("SELECT * FROM images WHERE category_id = $1 ORDER BY uploaded_at DESC", [category_id]);
     
     res.status(200).json({ images: result.rows });
   } catch (error) {
@@ -126,9 +206,7 @@ app.get("/images/category/:category", async (req, res) => {
 // API endpoint to get all images
 app.get("/files", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM images ORDER BY uploaded_at DESC"
-    );
+    const result = await pool.query("SELECT * FROM images ORDER BY uploaded_at DESC");
     res.status(200).json({ files: result.rows });
   } catch (error) {
     console.error("Error fetching files:", error);
@@ -136,7 +214,96 @@ app.get("/files", async (req, res) => {
   }
 });
 
+// API endpoint to add a comment to an image
+app.post("/comment", async (req, res) => {
+  try {
+    const { image_id, comment } = req.body;
+    
+    if (!image_id || !comment) {
+      return res.status(400).json({ message: "Image ID and comment are required" });
+    }
+    
+    const insertQuery = "INSERT INTO comments (image_id, comment) VALUES ($1, $2) RETURNING *";
+    const result = await pool.query(insertQuery, [image_id, comment]);
+    
+    res.status(201).json({ message: "Comment added successfully", comment: result.rows[0] });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// API endpoint to get comments for a specific image
+app.get("/comments/:image_id", async (req, res) => {
+  try {
+    const { image_id } = req.params;
+    
+    const result = await pool.query("SELECT * FROM comments WHERE image_id = $1 ORDER BY created_at DESC", [image_id]);
+    
+    res.status(200).json({ comments: result.rows });
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+});
+
+app.delete("/image/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get the image details from the database
+    const result = await pool.query("SELECT * FROM images WHERE id = $1", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    const image = result.rows[0];
+    const filePath = path.join(__dirname, "../myapp/static", image.filepath);
+
+    // Delete the file from the filesystem
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Delete the image record from the database
+    await pool.query("DELETE FROM images WHERE id = $1", [id]);
+
+    res.status(200).json({ message: "Image deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting image:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.put("/image/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, category } = req.body;
+
+    // Check if the image exists
+    const imageResult = await pool.query("SELECT * FROM images WHERE id = $1", [id]);
+    if (imageResult.rows.length === 0) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    // Update query
+    const updateQuery = `
+      UPDATE images 
+      SET name = $1, description = $2, category = $3
+      WHERE id = $4
+      RETURNING *;
+    `;
+
+    const result = await pool.query(updateQuery, [name, description, category, id]);
+
+    res.status(200).json({ message: "Image updated successfully", image: result.rows[0] });
+  } catch (error) {
+    console.error("Error updating image:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });

@@ -12,13 +12,6 @@
         { name: "Food" }
     ];
 
-    // Fetch categories when the component mounts
-    onMount(async () => {
-        const response = await fetch("http://localhost:3000/categories");
-        const data = await response.json();
-        categories = data.categories;
-    });
-
     async function handleUpload(event) {
         event.preventDefault();
         
@@ -111,6 +104,19 @@
                     {/each}
                 </select>
             </div>
+        {/if}
+        {#if files.length > 1}
+        <label for="category" class="block text-sm font-medium text-gray-700 mt-2">Category</label>
+                <select
+                    id="category"
+                    bind:value={category}
+                    class="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+                >
+                    <option value="" disabled selected>Select a category</option>
+                    {#each categories as categoryItem}
+                        <option value={categoryItem.name}>{categoryItem.name}</option>
+                    {/each}
+                </select>
         {/if}
 
         <button type="submit" class="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow">Submit</button>
