@@ -185,7 +185,7 @@ app.get("/categories", async (req, res) => {
 // API endpoint to upload images with categories
 app.post(
   "/upload",
-  upload.fields([{ name: "images", maxCount: 10 }, { name: "filename" }, { name: "description" }, { name: "category" }]),
+  upload.fields([{ name: "images", maxCount: 10 }, { name: "filename" }, { name: "description" }, { name: "category" }, { name: "owner_email"}]),
   async (req, res) => {
     console.log("Received files:", req.files);
     console.log("Received body:", req.body);
@@ -195,6 +195,7 @@ app.post(
       const fileNames = req.body.filename;
       const descrip = req.body.description;
       const categoryId = req.body.category;
+      const ownerId = req.body.owner_email
 
       if (!files || files.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
@@ -203,17 +204,19 @@ app.post(
       const nameArray = Array.isArray(fileNames) ? fileNames : [fileNames];
       const desArray = Array.isArray(descrip) ? descrip : [descrip];
       const cateArray = Array.isArray(categoryId) ? categoryId : [categoryId];
+      const ownArray = Array.isArray(ownerId) ? ownerId : [ownerId];
 
       const fileRecords = files.map((file, index) => ({
         filename: file.filename,
         filepath: `/uploads/${file.filename}`,
         name: nameArray[index] || file.originalname,
         description: desArray[index] || "",
-        category: cateArray[index] || null
+        category: cateArray[index] || null,
+        owner_email: ownArray[index] || null,
       }));
 
       const insertQuery =
-        "INSERT INTO images (filename, filepath, name, description, category) VALUES ($1, $2, $3, $4, $5) RETURNING *";
+        "INSERT INTO images (filename, filepath, name, description, category, owner_email) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *";
 
       const uploadedFiles = [];
       for (const file of fileRecords) {
@@ -222,7 +225,8 @@ app.post(
           file.filepath,
           file.name,
           file.description,
-          file.category
+          file.category,
+          file.owner_email,
         ]);
         uploadedFiles.push(result.rows[0]);
       }
