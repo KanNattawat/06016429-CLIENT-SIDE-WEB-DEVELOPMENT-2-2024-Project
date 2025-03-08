@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { user, fetchUser } from "../stores/gallery";
   import { goto } from "$app/navigation"; // Import goto for navigation
 
   let images = [];
@@ -8,8 +9,13 @@
   let commentText = "";
   let comments = [];
 
-  // Fetch images when the component mounts
-  onMount(fetchImages);
+  // Fetch data
+  onMount(() => {
+    fetchUser();
+    fetchImages();
+  });
+
+  $user && console.log("Debugging User Store:", $user);
 
   async function fetchImages() {
     try {
@@ -106,7 +112,7 @@
   }
 </script>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-5">
+<div class="masonry p-5">
   {#each images as img (img.id)}
     <div class="cursor-pointer transition-transform transform hover:scale-105" on:click={() => openImage(img.url, img.id, img.name, img.description, img.category)}>
       <img class="w-full h-auto rounded-lg" src={img.url} alt="Uploaded image" />

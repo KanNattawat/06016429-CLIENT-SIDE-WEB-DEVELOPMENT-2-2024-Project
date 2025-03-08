@@ -8,7 +8,7 @@
     <Navbar />
 
     <!-- Main Content Wrapper -->
-    <main class="flex-1 flex flex-col items-center justify-start pt-26">
+    <main class="flex-1 flex flex-col items-center justify-start pt-10">
         <h1 class="text-3xl md:text-4xl font-bold mb-6 text-center">Welcome to Pesterin</h1>
         <p class="text-lg text-gray-300 text-center mb-8 max-w-2xl">
             Explore and manage your image gallery with ease. Upload, edit, and organize your images seamlessly.

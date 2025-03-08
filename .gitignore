@@ -1,4 +1,24 @@
-week3.zip
-65070084.zip
-tictactoe_65070084.zip
-midterm test
+node_modules
+static
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

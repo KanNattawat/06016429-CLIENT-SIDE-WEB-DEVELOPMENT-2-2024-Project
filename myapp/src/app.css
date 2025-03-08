@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+.masonry {
+    columns: 2; /* Number of columns */
+    column-gap: 16px; /* Space between columns */
+}
+
+.masonry img {
+    width: 100%; /* Makes the width of the image fit the column */
+    display: block;
+    break-inside: avoid; /* Prevent images from breaking across columns */
+    margin-bottom: 16px; /* Space between images */
+    border-radius: 8px; /* Optional: rounded corners */
+}
+
+@media (min-width: 768px) {
+    .masonry {
+        columns: 4;
+    }
+}
+
+@media (min-width: 1024px) {
+    .masonry {
+        columns: 6;
+    }
+}
+
+button:hover {
+    cursor: pointer;
+}
