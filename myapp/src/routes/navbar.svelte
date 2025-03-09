@@ -33,7 +33,7 @@
             menuOpen2 = !menuOpen2;
         }
         menuOpen = !menuOpen;
-        document.body.style.overflow = menuOpen ? "hidden" : "auto"; // Prevent scrolling when menu is open
+        // document.body.style.overflow = menuOpen ? "hidden" : "auto"; // Prevent scrolling when menu is open
     }
 
     function toggleMenu2() {
@@ -41,7 +41,7 @@
             menuOpen = !menuOpen;
         }
         menuOpen2 = !menuOpen2;
-        document.body.style.overflow = menuOpen2 ? "hidden" : "auto"; // Prevent scrolling when menu is open
+        // document.body.style.overflow = menuOpen2 ? "hidden" : "auto"; // Prevent scrolling when menu is open
     }
 
     function toggleDropdown() {

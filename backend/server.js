@@ -8,6 +8,7 @@ const fs = require("fs");
 const cors = require("cors");
 const pg = require("pg");
 const dotenv = require("dotenv");
+const router = express.Router();
 
 dotenv.config();
 
@@ -139,6 +140,16 @@ async function initializeDatabase() {
     );
   `;
   await pool.query(createCategoriesTableQuery);
+
+  const createFavTableQuery = `
+  CREATE TABLE IF NOT EXISTS favorites (
+    id SERIAL PRIMARY KEY,
+    user_email TEXT,
+    image_id INTEGER REFERENCES images(id) ON DELETE CASCADE
+  );
+`;
+
+  await pool.query(createFavTableQuery);
 
   const createCommentsTableQuery = `
     CREATE TABLE IF NOT EXISTS comments (
@@ -445,3 +456,46 @@ app.put("/image/:id", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Add a favorite
+app.post("/favorite", async (req, res) => {
+  try {
+    const { user_email, image_id } = req.body;
+    const result = await pool.query(
+      "INSERT INTO favorites (user_email, image_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *",
+      [user_email, image_id]
+    );
+    res.json({ success: true, favorite: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Remove a favorite
+app.delete("/favorite", async (req, res) => {
+  try {
+    const { user_email, image_id } = req.body;
+    await pool.query(
+      "DELETE FROM favorites WHERE user_email = $1 AND image_id = $2",
+      [user_email, image_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get user's favorite images
+app.get("/favorites/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const result = await pool.query(
+      "SELECT images.* FROM images JOIN favorites ON images.id = favorites.image_id WHERE favorites.user_email = $1",
+      [email]
+    );
+    res.json({ favorites: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
