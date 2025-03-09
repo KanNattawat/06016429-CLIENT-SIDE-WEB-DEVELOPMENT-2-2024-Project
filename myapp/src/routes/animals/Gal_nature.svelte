@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { user, fetchUser } from "../stores/gallery";
+  import { user, fetchUser } from "../../stores/gallery";
   import { goto } from "$app/navigation"; // Import goto for navigation
   import { fade, fly } from "svelte/transition"; // Import transitions
 
@@ -20,7 +20,7 @@
 
   async function fetchImages() {
   try {
-    const response = await fetch("http://localhost:3000/files");
+    const response = await fetch("http://localhost:3000/animals");
     if (response.ok) {
       const result = await response.json();
       images = result.files.map((file) => ({
@@ -35,7 +35,7 @@
       alert("Failed to fetch images!");
     }
   } catch (error) {
-    alert("Error fetching images: " + error);
+    alert("1 Error fetching images: " + error);
   }
 }
 
@@ -157,7 +157,7 @@
 
   async function fetchImage() {
     try {
-      const response = await fetch("http://localhost:3000/files");
+      const response = await fetch("http://localhost:3000/animals");
       if (response.ok) {
         const result = await response.json();
         img = result.files.map((file) => file.filepath);
@@ -165,7 +165,7 @@
         alert("Failed to fetch images!");
       }
     } catch (error) {
-      alert("Error fetching images: " + error);
+      alert("2 Error fetching images: " + error);
     }
   }
 
@@ -199,9 +199,7 @@
     await fetchImage();
   });
 </script>
-
 <button on:click={startSlideshow} class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button>
-
 <div class="masonry p-5">
   {#each images as img (img.id)}
     <div
@@ -271,6 +269,8 @@
     </div>
   </div>
 {/if}
+
+<!-- <button on:click={startSlideshow} class="bg-gray-700 text-white px-4 py-2 rounded">Start Fullscreen Slideshow</button> -->
 
 {#if showSlideshow}
   <div class="fixed inset-0 bg-black flex items-center justify-center">
