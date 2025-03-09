@@ -74,9 +74,9 @@
             </a>
             {#if $user}
             <div class="relative ml-4">
-                <button on:click={toggleDropdown} class="dropdown-btn group flex items-center space-x-2 py-2 px-4 rounded-xl hover:bg-gray-900 {dropdown ? "bg-gray-900" : ""}">
+                <button on:click={toggleDropdown} class="dropdown-btn group flex items-center space-x-2 py-2 px-4 rounded-xl hover:bg-gray-900 {dropdown ? 'bg-gray-900' : ''}">
                     <span>{$user ? $user.formatName : "Anonymous"}</span>
-                    <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 group-hover:brightness-75" />
+                    <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 {dropdown ? 'border-blue-600' : ''}" />
                 </button>
                 {#if dropdown}
                     <div class="dropdown-menu absolute w-full mt-2 bg-white text-black rounded-xl">

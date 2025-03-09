@@ -137,7 +137,7 @@ async function initializeDatabase() {
       description TEXT,
       category TEXT,
       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      owner_email TEXT,
+      owner_email TEXT
     );
   `;
   await pool.query(createImagesTableQuery);

@@ -68,6 +68,12 @@
         }
     }
 
+    function handleClick(event) {
+        let fileInput = document.getElementById("fileInput");
+        fileInput.value = "";
+        fileInput.click();
+    }
+
     function handleFileChange(event) {
         files = [...event.target.files];
     }
@@ -95,13 +101,23 @@
         <a href="http://localhost:5173/"><button class="py-2 px-4 rounded-xl border-2 text-white bg-blue-800 border-indigo-800 hover:bg-blue-600">Back</button></a>
         <h2 class="text-xl font-semibold mb-4 text-center">Upload Images</h2>
 
-        <div 
+        <div
+            role="button" 
+            tabindex="0" 
+            aria-label="Upload Files"
             class="group border-2 border-dashed rounded-lg p-6 text-center cursor-pointer relative hover:bg-gray-300"
             class:border-blue-500={dragging}
             on:dragover={handleDragOver}
             on:dragleave={handleDragLeave}
             on:drop={handleDrop}
-            on:click={() => document.getElementById("fileInput").click()}
+            on:click={handleClick}
+            on:keypress={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    let fileInput = document.getElementById("fileInput");
+                    fileInput.value = "";
+                    fileInput.click();
+                }
+            }}
         >
         {#if files.length}
         <div class="flex flex-wrap gap-2 justify-center">
@@ -125,9 +141,9 @@
         </div>
 
         {#if files.length}
-            <ul class="mt-4 text-sm text-gray-700">
+            <ul class="mt-4 text-sm text-center text-gray-700">
                 {#each files as file}
-                    <li class="overflow-auto">{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
+                    <li class="overflow-auto py-2">File: {file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
                     <hr>
                 {/each}
             </ul>
