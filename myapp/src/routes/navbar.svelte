@@ -1,5 +1,5 @@
 <script>
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { user, fetchUser, logout } from "../stores/gallery";
     import { get } from "svelte/store";
 
@@ -34,7 +34,24 @@
         dropdown = !dropdown;
     }
 
-    onMount(fetchUser);
+    function closeDropdown() {
+        if (!event.target.closest(".dropdown-menu") && !event.target.closest(".dropdown-btn")) {
+            dropdown = false;
+        }
+    }
+
+    onMount(() => {
+        fetchUser();
+        if (typeof document !== "undefined") {
+            document.addEventListener("click", closeDropdown);
+        }
+    });
+
+    onDestroy(() => {
+        if (typeof document !== "undefined") {
+            document.addEventListener("click", closeDropdown);
+        }
+    })
 </script>
 
 <button 
@@ -44,8 +61,8 @@
         {isOpen ? "Close" : "Open"} Menu
     </button>
 <!-- <nav class="fixed top-0 left-0 w-full z-50 flex items-center justify-between bg-gray-800 p-4 text-white shadow-md" id="naver"> -->
-    <nav class="flex items-center justify-between bg-gray-800 p-4 text-white">
-        <a href="/"><h1 class="text-3xl font-bold px-5 hover:text-blue-500">Pesterin</h1></a>
+    <nav class="fixed top-0 w-full h-20 z-50 flex items-center justify-between bg-gray-800 p-4 text-white">
+        <a href="/"><h1 class="text-3xl font-bold px-10 hover:text-blue-500">Pesterin</h1></a>
         <div class="flex items-center space-x-2">
             <a href="/upload">
                 <p class="text-white rounded-md hover:underline">Upload Image</p>
@@ -57,12 +74,12 @@
             </a>
             {#if $user}
             <div class="relative ml-4">
-                <button on:click={toggleDropdown} class="group flex items-center space-x-2 hover:bg-gray-900 py-2 px-4 rounded-xl">
+                <button on:click={toggleDropdown} class="dropdown-btn group flex items-center space-x-2 py-2 px-4 rounded-xl hover:bg-gray-900 {dropdown ? "bg-gray-900" : ""}">
                     <span>{$user ? $user.formatName : "Anonymous"}</span>
                     <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 group-hover:brightness-75" />
                 </button>
                 {#if dropdown}
-                    <div class="absolute w-full mt-2 bg-white text-black rounded-xl">
+                    <div class="dropdown-menu absolute w-full mt-2 bg-white text-black rounded-xl">
                         <a href="/" class="block text-center px-4 py-3 hover:rounded-xl hover:bg-gray-200">My Uploads</a>
                         <button on:click={logout} class="block w-full text-center px-4 py-3 hover:rounded-xl hover:bg-gray-200">Log Out</button>
                     </div>

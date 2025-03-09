@@ -90,20 +90,29 @@
 
 <Navbar />
 
-<div class="flex items-center justify-center min-h-screen bg-gray-900">
+<div class="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] p-10 bg-gray-900">
     <form class="bg-white p-6 rounded-lg shadow-md w-96" on:submit={handleUpload}>
-        <a href="http://localhost:5173/">Back</a>
+        <a href="http://localhost:5173/"><button class="py-2 px-4 rounded-xl border-2 text-white bg-blue-800 border-indigo-800 hover:bg-blue-600">Back</button></a>
         <h2 class="text-xl font-semibold mb-4 text-center">Upload Images</h2>
 
         <div 
-            class="border-2 border-dashed p-6 text-center cursor-pointer relative"
+            class="group border-2 border-dashed rounded-lg p-6 text-center cursor-pointer relative hover:bg-gray-300"
             class:border-blue-500={dragging}
             on:dragover={handleDragOver}
             on:dragleave={handleDragLeave}
             on:drop={handleDrop}
             on:click={() => document.getElementById("fileInput").click()}
         >
-            <p class="text-gray-600">Drag & drop files here or <span class="text-blue-500 underline">click to select</span></p>
+        {#if files.length}
+        <div class="flex flex-wrap gap-2 justify-center">
+            {#each files as file}
+                <div class="relative">
+                    <img src={URL.createObjectURL(file)} alt="Uploaded Image" class="w-auto object-cover rounded-lg shadow-md border" />
+                </div>
+            {/each}
+        </div>
+        {:else}
+            <p class="text-gray-600">Drag & drop files here or <span class="text-blue-500 underline group-hover:text-blue-800">click to select</span></p>
             <input 
                 id="fileInput"
                 type="file"
@@ -112,6 +121,7 @@
                 class="hidden"
                 on:change={handleFileChange}
             />
+        {/if}
         </div>
 
         {#if files.length}

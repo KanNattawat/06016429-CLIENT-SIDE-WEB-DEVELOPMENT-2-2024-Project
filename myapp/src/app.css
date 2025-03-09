@@ -13,6 +13,10 @@
     border-radius: 8px; /* Optional: rounded corners */
 }
 
+body {
+    padding-top: 5rem;
+}
+
 @media (min-width: 768px) {
     .masonry {
         columns: 4;
