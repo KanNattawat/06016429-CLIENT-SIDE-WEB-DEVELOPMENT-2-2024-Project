@@ -28,8 +28,23 @@ export async function fetchUser() {
 }
 
 export async function logout() {
-    await fetch("http://localhost:3000/logout", { credentials: "include" });
-    user.set(null);
+    try {
+        const response = await fetch("http://localhost:3000/logout", {
+            credentials: "include",
+        });
+
+        if (!response.ok) {
+            throw new Error(`Logout failed with status ${response.status}`);
+        }
+
+        user.set(null);
+        console.log("User logged out successfully");
+
+        window.location.href = "http://localhost:5173";
+    } catch (error) {
+        console.error("Logout error:", error);
+        alert("Log out failed. Check the console for details.");
+    }
 }
 
 export async function fetchImages() {

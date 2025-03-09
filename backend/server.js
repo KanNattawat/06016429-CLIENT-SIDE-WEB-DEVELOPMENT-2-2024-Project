@@ -46,7 +46,7 @@ passport.use(
       callbackURL: `${process.env.BASE_URL}/auth/google/callback`,
     },
     (accessToken, refreshToken, profile, done) => {
-      console.log("User profile:", profile);
+      console.log("User profile:", profile, "\n--------------------");
       return done(null, profile);
     }
   )
@@ -65,11 +65,14 @@ passport.deserializeUser((user, done) => {
 // Route to initiate Google OAuth
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/" }), (req, res) => {
+  let user = req.user;
+  let split = user.displayName.trim().split(" ");
   req.session.user = {
-    picture: req.user.photos[0].value,
-    name: req.user.displayName,
-    email: req.user.emails[0].value,
+    picture: user.photos[0].value,
+    formatName: split.length > 1 ? `${split[0]} ${split[split.length - 1][0] + "."}` : user.displayName,
+    email: user.emails[0].value,
   };
+  console.log("Session:", req.session.user, "\n--------------------")
   res.redirect("http://localhost:5173");
 });
 
@@ -83,9 +86,15 @@ app.get("/auth/user", (req, res) => {
 
 // Logout route
 app.get("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) return next(err);
-    res.redirect("http://localhost:5173/");
+  req.session.destroy((err) => {
+      if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ message: "Logout failed" });
+      }
+
+      res.clearCookie("connect.sid", { path: "/" });
+      console.log("User logged out successfully");
+      res.json({ message: "Logged out successfully" });
   });
 });
 
