@@ -295,6 +295,63 @@ app.get("/files", async (req, res) => {
   }
 });
 
+// API endpoint to get images in the "Nature" category
+app.get("/nature", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM images WHERE category = 'Nature' ORDER BY uploaded_at DESC");
+    
+    res.status(200).json({ files: result.rows });
+  } catch (error) {
+    console.error("Error fetching Nature category images:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/animals", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM images WHERE category = 'Animals' ORDER BY uploaded_at DESC");
+    
+    res.status(200).json({ files: result.rows });
+  } catch (error) {
+    console.error("Error fetching Nature category images:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/technology", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM images WHERE category = 'Technology' ORDER BY uploaded_at DESC");
+    
+    res.status(200).json({ files: result.rows });
+  } catch (error) {
+    console.error("Error fetching Nature category images:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/architecture", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM images WHERE category = 'Architecture' ORDER BY uploaded_at DESC");
+    
+    res.status(200).json({ files: result.rows });
+  } catch (error) {
+    console.error("Error fetching Nature category images:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/food", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM images WHERE category = 'Food' ORDER BY uploaded_at DESC");
+    
+    res.status(200).json({ files: result.rows });
+  } catch (error) {
+    console.error("Error fetching Nature category images:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 // API endpoint to add a comment to an image
 app.post("/comment", async (req, res) => {
   try {
