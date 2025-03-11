@@ -219,12 +219,12 @@
 </div>
 
 {#if selectedImage}
-  <div class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center overflow-auto" transition:fade={{ duration: 100 }}>
+  <div class="pt-20 fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center overflow-auto" transition:fade={{ duration: 100 }}>
     <p class="absolute top-5 left-5 text-white text-xl rounded cursor-pointer p-5 font-bold" on:click={closePreview}>
       Close
     </p>
     
-    <img class="w-[70%] mt-4 cursor-pointer" src={selectedImage.url} alt="Preview" id="pre_img" on:click={toggleFullscreen} />
+    <img class="h-full w-auto mt-4 cursor-pointer" src={selectedImage.url} alt="Preview" id="pre_img" on:click={toggleFullscreen} />
 
     <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg w-[100%] p-25 mt-5">
       <h3 class="text-4xl font-bold inline">{selectedImage.name}</h3>

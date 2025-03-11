@@ -19,6 +19,8 @@
 	"description": "Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).",
 	"main": "svelte.config.js",
 	"dependencies": {
+		"@fortawesome/free-brands-svg-icons": "^6.7.2",
+		"@fortawesome/svelte-fontawesome": "^0.2.3",
 		"@tailwindcss/vite": "^4.0.8",
 		"acorn": "^8.14.0",
 		"acorn-typescript": "^1.4.13",

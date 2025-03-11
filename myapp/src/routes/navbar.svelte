@@ -2,6 +2,17 @@
     import { onDestroy, onMount } from "svelte";
     import { user, fetchUser, logout } from "../stores/gallery";
     import { get } from "svelte/store";
+    import { browser } from "$app/environment";
+    import { goto } from "$app/navigation";
+
+    export function load() {
+    if (browser) {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) {
+        goto("/login");
+        }
+    }
+    }
 
     let activeTab = "All Images"; // Default active tab
     let isOpen = true; // Sidebar state (open/closed)
@@ -86,7 +97,7 @@
                 {/if}
             </div>
             {:else}
-                <a href="http://localhost:3000/auth/google" class="ml-4">
+                <a href="/login" class="ml-4">
                     <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Log In</button>
                 </a>
             {/if}

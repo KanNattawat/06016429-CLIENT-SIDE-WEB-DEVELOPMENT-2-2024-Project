@@ -2,6 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy; 
+const FacebookStrategy = require("passport-facebook").Strategy;
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -37,7 +38,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// OAuth API
+// Google OAuth API
 passport.use(
   new GoogleStrategy(
     {
@@ -47,6 +48,22 @@ passport.use(
     },
     (accessToken, refreshToken, profile, done) => {
       console.log("User profile:", profile, "\n--------------------");
+      return done(null, profile);
+    }
+  )
+);
+
+// Facebook OAuth API
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: `${process.env.BASE_URL}/auth/facebook/callback`,
+      profileFields: ["id", "displayName", "photos", "email"],
+    },
+    (accessToken, refreshToken, profile, done) => {
+      console.log("Facebook User profile:", profile, "\n--------------------");
       return done(null, profile);
     }
   )
@@ -75,6 +92,21 @@ app.get("/auth/google/callback", passport.authenticate("google", { failureRedire
   console.log("Session:", req.session.user, "\n--------------------")
   res.redirect("http://localhost:5173");
 });
+
+// Route to initiate Facebook OAuth
+app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
+app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/" }), (req, res) => {
+    let user = req.user;
+    let split = user.displayName.trim().split(" ");
+    req.session.user = {
+      picture: user.photos[0].value,
+      formatName: split.length > 1 ? `${split[0]} ${split[split.length - 1][0] + "."}` : user.displayName,
+      email: user.emails ? user.emails[0].value : "No email provided",
+    };
+    console.log("Session:", req.session.user);
+    res.redirect("http://localhost:5173");
+  }
+);
 
 // Fetch user's data
 app.get("/auth/user", (req, res) => {
