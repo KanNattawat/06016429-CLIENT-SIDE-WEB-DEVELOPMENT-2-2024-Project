@@ -1,18 +1,7 @@
 <script>
     import { onDestroy, onMount } from "svelte";
-    import { user, fetchUser, logout } from "../stores/gallery";
+    import { user, fetchUser, login, logout } from "../stores/gallery";
     import { get } from "svelte/store";
-    import { browser } from "$app/environment";
-    import { goto } from "$app/navigation";
-
-    export function load() {
-    if (browser) {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (!user) {
-        goto("/login");
-        }
-    }
-    }
 
     let activeTab = "All Images"; // Default active tab
     let isOpen = true; // Sidebar state (open/closed)
@@ -30,8 +19,6 @@
         { id: 5, name: "Architecture", href: "/architecture" },
         { id: 6, name: "Food", href: "/food" },
     ];
-
-    onMount(fetchUser);
 
     function selectTab(tab) {
         activeTab = tab;
@@ -71,7 +58,6 @@
     >
         {isOpen ? "Close" : "Open"} Menu
     </button>
-<!-- <nav class="fixed top-0 left-0 w-full z-50 flex items-center justify-between bg-gray-800 p-4 text-white shadow-md" id="naver"> -->
     <nav class="fixed top-0 w-full h-20 z-50 flex items-center justify-between bg-gray-800 p-4 text-white">
         <a href="/"><h1 class="text-3xl font-bold px-10 hover:text-blue-500">Pesterin</h1></a>
         <div class="flex items-center space-x-2">
@@ -84,7 +70,7 @@
                 </button>
             </a>
             {#if $user}
-            <div class="relative ml-4">
+            <div class="relative">
                 <button on:click={toggleDropdown} class="dropdown-btn group flex items-center space-x-2 py-2 px-4 rounded-xl hover:bg-gray-900 {dropdown ? 'bg-gray-900' : ''}">
                     <span>{$user ? $user.formatName : "Anonymous"}</span>
                     <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 {dropdown ? 'border-blue-600' : ''}" />
@@ -97,9 +83,7 @@
                 {/if}
             </div>
             {:else}
-                <a href="/login" class="ml-4">
-                    <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Log In</button>
-                </a>
+                <button on:click={login} class="ml-4 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Log In</button>
             {/if}
         </div>
     </nav>

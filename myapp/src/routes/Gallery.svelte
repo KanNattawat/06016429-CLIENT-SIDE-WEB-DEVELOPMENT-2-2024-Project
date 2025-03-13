@@ -1,44 +1,28 @@
 <script>
   import { onMount } from "svelte";
-  import { user, fetchUser } from "../stores/gallery";
+  import { user, images,
+          fetchUser, fetchImages } from "../stores/gallery";
   import { goto } from "$app/navigation"; // Import goto for navigation
   import { fade, fly } from "svelte/transition"; // Import transitions
 
-  let images = [];
+  let comments = [];
+  let commentText = "";
   let selectedImage = null;
   let selectedImageId = null;
-  let commentText = "";
-  let comments = [];
+  let img = [];
+  let currentIndex = 0;
+  let interval;
+  let showSlideshow = false;
 
   // Fetch data
   onMount(() => {
     fetchUser();
     fetchImages();
+    fetchComments();
+    handleAddComment();
   });
 
   $user && console.log("Debugging User Store:", $user.id);
-
-  async function fetchImages() {
-  try {
-    const response = await fetch("http://localhost:3000/files");
-    if (response.ok) {
-      const result = await response.json();
-      images = result.files.map((file) => ({
-        id: file.id,
-        url: file.filepath,
-        name: file.name,
-        description: file.description,
-        category: file.category || "Uncategorized",
-        owner_email: file.owner_email // Ensure backend includes this
-      }));
-    } else {
-      alert("Failed to fetch images!");
-    }
-  } catch (error) {
-    alert("Error fetching images: " + error);
-  }
-}
-
 
   async function fetchComments(image_id) {
     try {
@@ -95,7 +79,7 @@
       );
 
       if (response.ok) {
-        images = images.filter((img) => img.id !== selectedImageId);
+        $images = $images.filter((img) => img.id !== selectedImageId);
         closePreview();
       } else {
         alert("Failed to delete image!");
@@ -150,11 +134,6 @@
     }
   }
 
-  let img = [];
-  let currentIndex = 0;
-  let interval;
-  let showSlideshow = false;
-
   async function fetchImage() {
     try {
       const response = await fetch("http://localhost:3000/files");
@@ -203,7 +182,7 @@
 <button on:click={startSlideshow} class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button>
 
 <div class="masonry p-5">
-  {#each images as img (img.id)}
+  {#each $images as img (img.id)}
     <div
       class="cursor-pointer transition-transform transform hover:scale-105"
       on:click={() =>
@@ -263,11 +242,12 @@
         {/each}
         <br>
       </div>
-
+      {#if $user}
       <textarea class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400" bind:value={commentText} placeholder="Add comment ..."></textarea>
-      <button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded" on:click={handleAddComment}>
-        Add Comment
-      </button>
+      <button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded" on:click={handleAddComment}>Add Comment</button>
+      {:else}
+        <textarea class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text" placeholder="Please login before adding comment ..." disabled></textarea>
+      {/if}
     </div>
   </div>
 {/if}
