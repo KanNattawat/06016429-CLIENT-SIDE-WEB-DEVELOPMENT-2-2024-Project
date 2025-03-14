@@ -12,6 +12,7 @@ export const nodes = [
 	() => import('./nodes/8'),
 	() => import('./nodes/9'),
 	() => import('./nodes/10'),
+	() => import('./nodes/10'),
 	() => import('./nodes/11'),
 	() => import('./nodes/12')
 ];

@@ -1,4 +1,6 @@
 import { writable } from "svelte/store";
+import { browser } from "$app/environment";
+import { goto } from "$app/navigation";
 
 export let user = writable(null);
 export let images = writable([]);
@@ -6,6 +8,19 @@ export let selectedImage = writable(null);
 export let selectedImageId = writable(null);
 export let commentText = writable("");
 export let comments = writable([]);
+export let img = writable([]);
+export let currentIndex = writable(0);
+export let showSlideshow = writable(false);
+let interval;
+
+export async function login() {
+    if (browser) {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) {
+            goto("/login");
+        }
+    }
+}
 
 export async function fetchUser() {
     try {
@@ -21,8 +36,7 @@ export async function fetchUser() {
         if (data.user) {
             user.set(data.user);
         }
-    }
-    catch {
+    } catch {
         alert("User not authorized");
     }
 }
@@ -52,29 +66,19 @@ export async function fetchImages() {
         const response = await fetch("http://localhost:3000/files");
         if (response.ok) {
             const result = await response.json();
-            images = result.files.map((file) => ({
-            id: file.id,
-            url: file.filepath,
-            name: file.name,
-            description: file.description,
-            category: file.category || "Uncategorized", // Directly using category as a string
-            }));
+            images.set(result.files.map((file) => ({
+                id: file.id,
+                url: file.filepath,
+                name: file.name,
+                description: file.description,
+                category: file.category || "Uncategorized",
+                owner_email: file.owner_email || "Anonymous"
+            })));
         } else {
             alert("Failed to fetch images!");
         }
     } catch (error) {
         alert("Error fetching images: " + error);
-    }
-}
-
-export async function fetchComments(image_id) {
-    try {
-        const response = await fetch(`http://localhost:3000/comments/${image_id}`);
-        const data = await response.json();
-        comments = data.comments;
-        } catch (error) {
-        console.error("Error fetching comments:", error);
-        comments = [];
     }
 }
 
@@ -85,7 +89,10 @@ export async function handleAddComment() {
         const response = await fetch("http://localhost:3000/comment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image_id: selectedImageId, comment: commentText }),
+            body: JSON.stringify({
+            image_id: selectedImageId,
+            comment: commentText,
+            }),
         });
 
         if (response.ok) {
@@ -100,13 +107,112 @@ export async function handleAddComment() {
     }
 }
 
-export async function openImage(url, id, name, description, category) {
-    selectedImage = { url, id, name, description, category };
-    selectedImageId = id;
-    fetchComments(id);
+async function fetchComments(image_id) {
+    try {
+        const response = await fetch(
+            `http://localhost:3000/comments/${image_id}`,
+        );
+        const data = await response.json();
+        comments = data.comments;
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        comments = [];
+    }
 }
 
-export async function closePreview() {
-    selectedImage = null;
-    selectedImageId = null;
+export async function handleEditImage() {
+    if ($selectedImageId) {
+        goto(`/edit_img/${$selectedImageId}`);
+    }
+}
+
+export async function handleDeleteImage() {
+    if (!$selectedImageId) return;
+
+    const confirmDelete = confirm("Are you sure you want to delete this image?");
+    if (!confirmDelete) return;
+
+    try {
+        const response = await fetch(`http://localhost:3000/image/${$selectedImageId}`, {
+            method: "DELETE",
+        });
+
+        if (response.ok) {
+            images.update((imgs) => imgs.filter((img) => img.id !== $selectedImageId));
+            closePreview();
+        } else {
+            alert("Failed to delete image!");
+        }
+    } catch (error) {
+        console.error("Error deleting image:", error);
+    }
+}
+
+export function openImage(url, id, name, description, category, owner_email) {
+    selectedImage.set({ url, id, name, description, category, owner_email });
+    selectedImageId.set(id);
+    fetchComments(id);
+    document.getElementById("naver").style.visibility = "hidden";
+}
+
+export function closePreview() {
+    selectedImage.set(null);
+    selectedImageId.set(null);
+    document.getElementById("naver").style.visibility = "visible";
+}
+
+export function toggleFullscreen() {
+    const img = document.getElementById("pre_img");
+
+    if (!document.fullscreenElement) {
+        if (img.requestFullscreen) img.requestFullscreen();
+        else if (img.mozRequestFullScreen) img.mozRequestFullScreen();
+        else if (img.webkitRequestFullscreen) img.webkitRequestFullscreen();
+        else if (img.msRequestFullscreen) img.msRequestFullscreen();
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+}
+
+export async function fetchImage() {
+    try {
+        const response = await fetch("http://localhost:3000/files");
+        if (response.ok) {
+            const result = await response.json();
+            img.set(result.files.map((file) => file.filepath));
+        } else {
+            alert("Failed to fetch images!");
+        }
+    } catch (error) {
+        alert("Error fetching images: " + error);
+    }
+}
+
+export function nextImage() {
+    currentIndex.update((index) => (index + 1) % $img.length);
+}
+
+export function prevImage() {
+    currentIndex.update((index) => (index - 1 + $img.length) % $img.length);
+}
+
+export function startSlideshow() {
+    showSlideshow.set(true);
+    interval = setInterval(nextImage, 8000);
+    document.documentElement.requestFullscreen();
+}
+
+export function stopSlideshow() {
+    showSlideshow.set(false);
+    clearInterval(interval);
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    }
+}
+
+export function handleImageClick() {
+    stopSlideshow();
 }
