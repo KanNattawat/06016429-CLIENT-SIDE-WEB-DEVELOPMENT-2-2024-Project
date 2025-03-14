@@ -218,7 +218,7 @@
 
 {#if selectedImage}
   <div class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center overflow-auto" transition:fade={{ duration: 100 }}>
-    <p class="absolute top-5 left-5 text-white text-xl rounded cursor-pointer p-5 font-bold" on:click={closePreview}>
+    <p class="absolute top-25 left-5 text-white text-xl rounded cursor-pointer p-5 font-bold" on:click={closePreview}>
       Close
     </p>
     

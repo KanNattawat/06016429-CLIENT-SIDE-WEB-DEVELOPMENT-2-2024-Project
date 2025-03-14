@@ -14,31 +14,84 @@
   onMount(() => {
     fetchUser();
     fetchImages();
+    fetchFavorites();
   });
+
+  // FAV
+  let favorites = new Set();
+
+  async function toggleFavorite(imageId) {
+    if (!user) return alert("Please log in to favorite images!");
+
+    const isFavorite = favorites.has(imageId);
+    const method = isFavorite ? "DELETE" : "POST";
+    
+    try {
+      await fetch("http://localhost:3000/favorite", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
+      });
+
+      // **Create a new Set to trigger reactivity**
+      favorites = new Set(favorites);
+
+      if (isFavorite) {
+        favorites.delete(imageId);
+      } else {
+        favorites.add(imageId);
+      }
+
+      // Save the updated favorites to localStorage
+      localStorage.setItem('favorites', JSON.stringify([...favorites]));
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  }
+
+  async function fetchFavorites() {
+    if (!user) return;
+
+    // Retrieve favorites from localStorage
+    const storedFavorites = localStorage.getItem('favorites');
+    if (storedFavorites) {
+      favorites = new Set(JSON.parse(storedFavorites));
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/favorites/${encodeURIComponent($user.email)}`);
+      const data = await response.json();
+
+      // Ensure the image ID is correctly referenced here as 'id' instead of 'image_id'
+      favorites = new Set(data.favorites.map((selectedImageId) => selectedImageId));
+      console.log(favorites);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
+  }
 
   $user && console.log("Debugging User Store:", $user.id);
 
   async function fetchImages() {
-  try {
-    const response = await fetch("http://localhost:3000/nature");
-    if (response.ok) {
-      const result = await response.json();
-      images = result.files.map((file) => ({
-        id: file.id,
-        url: file.filepath,
-        name: file.name,
-        description: file.description,
-        category: file.category || "Uncategorized",
-        owner_email: file.owner_email // Ensure backend includes this
-      }));
-    } else {
-      alert("Failed to fetch images!");
+    try {
+      const response = await fetch("http://localhost:3000/nature");
+      if (response.ok) {
+        const result = await response.json();
+        images = result.files.map((file) => ({
+          id: file.id,
+          url: file.filepath,
+          name: file.name,
+          description: file.description,
+          category: file.category || "Uncategorized",
+          owner_email: file.owner_email // Ensure backend includes this
+        }));
+      } else {
+        alert("Failed to fetch images!");
+      }
+    } catch (error) {
+      alert("Error fetching images: " + error);
     }
-  } catch (error) {
-    alert("1 Error fetching images: " + error);
   }
-}
-
 
   async function fetchComments(image_id) {
     try {
@@ -115,7 +168,8 @@
     selectedImage = { url, id, name, description, category, owner_email };
     selectedImageId = id;
     fetchComments(id);
-    document.getElementById("naver").style.visibility = "hidden";
+    document.getElementById("naver").style.visibility = "visible";
+    // fetchFavorites();
   }
 
   function closePreview() {
@@ -125,30 +179,40 @@
   }
 
   function toggleFullscreen() {
-    const img = document.getElementById("pre_img");
+  const img = document.getElementById("pre_img");
 
-    if (!document.fullscreenElement) {
-      if (img.requestFullscreen) {
-        img.requestFullscreen();
-      } else if (img.mozRequestFullScreen) {
-        img.mozRequestFullScreen();
-      } else if (img.webkitRequestFullscreen) {
-        img.webkitRequestFullscreen();
-      } else if (img.msRequestFullscreen) {
-        img.msRequestFullscreen();
-      }
+  if (!img) {
+    console.error("Image element not found!");
+    return;
+  }
+
+  if (!document.fullscreenElement) {
+    if (img.requestFullscreen) {
+      img.requestFullscreen();
+    } else if (img.mozRequestFullScreen) { // Firefox
+      img.mozRequestFullScreen();
+    } else if (img.webkitRequestFullscreen) { // Chrome, Safari, Opera
+      img.webkitRequestFullscreen();
+    } else if (img.msRequestFullscreen) { // IE/Edge
+      img.msRequestFullscreen();
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
+      console.warn("Fullscreen API is not supported on this browser.");
+    }
+    img.setAttribute("class", "w-fit pt-0 mt-4 cursor-pointer pt-0");
+  } else {
+    img.setAttribute("class", "w-fit pt-25 mt-4 cursor-pointer pt-0");
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
     }
   }
+}
+
 
   let img = [];
   let currentIndex = 0;
@@ -165,7 +229,7 @@
         alert("Failed to fetch images!");
       }
     } catch (error) {
-      alert("2 Error fetching images: " + error);
+      alert("Error fetching images: " + error);
     }
   }
 
@@ -178,18 +242,29 @@
   }
 
   function startSlideshow() {
-    showSlideshow = true;
-    interval = setInterval(nextImage, 8000);
-    document.documentElement.requestFullscreen();
-  }
+  showSlideshow = true;
+  interval = setInterval(nextImage, 6000);
 
-  function stopSlideshow() {
-    showSlideshow = false;
-    clearInterval(interval);
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    }
+  // Hide the navbar
+  const nav = document.getElementById("naver");
+  if (nav) nav.style.visibility = "hidden";
+
+  document.documentElement.requestFullscreen();
+}
+
+function stopSlideshow() {
+  showSlideshow = false;
+  clearInterval(interval);
+
+  // Show the navbar when exiting slideshow
+  const nav = document.getElementById("naver");
+  if (nav) nav.style.visibility = "visible";
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
   }
+}
+
 
   function handleImageClick() {
     stopSlideshow();
@@ -199,8 +274,10 @@
     await fetchImage();
   });
 </script>
+
 <button on:click={startSlideshow} class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button>
-<div class="masonry p-5">
+<br>
+<div class="masonry">
   {#each images as img (img.id)}
     <div
       class="cursor-pointer transition-transform transform hover:scale-105"
@@ -217,60 +294,75 @@
 </div>
 
 {#if selectedImage}
-  <div class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center overflow-auto" transition:fade={{ duration: 100 }}>
-    <p class="absolute top-5 left-5 text-white text-xl rounded cursor-pointer p-5 font-bold" on:click={closePreview}>
-      Close
+<div class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center overflow-auto" transition:fade={{ duration: 100 }}>
+  <p class="absolute top-25 left-10 text-white text-xl rounded cursor-pointer p-5 font-bold" on:click={closePreview}>
+    Close
+  </p>
+  
+  <img 
+  class="w-fit pt-25 mt-4 cursor-pointer pt-0" 
+  src={selectedImage.url} 
+  alt="Preview" 
+  id="pre_img" 
+  on:click={() => toggleFullscreen()} 
+/>
+
+
+  <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg w-full p-25 mt-5">
+    <h3 class="text-4xl font-bold inline">{selectedImage.name}</h3>
+    
+    <a href={selectedImage.url} download={selectedImage.name}>
+      <button class="absolute right-15 bg-blue-800 h-10 w-30 rounded-lg hover:bg-blue-900">
+        Download
+      </button>
+    </a>
+    
+    {#if $user && $user.email === selectedImage.owner_email} <!-- Check ownership -->
+    <button class="absolute right-81 bg-yellow-700 h-10 w-30 rounded-lg hover:bg-yellow-800" on:click={handleEditImage}>
+      Edit
+    </button>
+    <button class="absolute right-48 bg-red-800 h-10 w-30 rounded-lg hover:bg-red-900" on:click={handleDeleteImage}>
+      Delete
+    </button>
+    {/if}
+    
+    <!-- Move Favorite button below Download button -->
+    <button class="absolute right-15 bg-gray-800 rounded-lg hover:bg-gray-900 mt-16" on:click|stopPropagation={() => toggleFavorite(selectedImageId)}>
+      {#if favorites.has(selectedImageId)}
+        ❤️ Favorite
+      {:else}
+        🤍 Add To Favorite
+      {/if}
+    </button>
+
+    <p class="text-gray-300 pt-6 text-l">
+      Category <span class="font-semibold">{selectedImage.category}</span>
     </p>
     
-    <img class="w-[70%] mt-4 cursor-pointer" src={selectedImage.url} alt="Preview" id="pre_img" on:click={toggleFullscreen} />
+    <hr class="my-4 border-gray-600" />
+    <p class="leading-relaxed text-xl">{selectedImage.description}</p>
 
-    <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg w-[100%] p-25 mt-5">
-      <h3 class="text-4xl font-bold inline">{selectedImage.name}</h3>
-      
-      <a href={selectedImage.url} download={selectedImage.name}>
-        <button class="absolute right-15 bg-blue-800 h-10 w-30 rounded-lg hover:bg-blue-900">
-          Download
-        </button>
-      </a>
-
-      {#if $user && $user.email === selectedImage.owner_email} <!-- Check ownership -->
-        <button class="absolute right-81 bg-yellow-700 h-10 w-30 rounded-lg hover:bg-yellow-800" on:click={handleEditImage}>
-          Edit
-        </button>
-        <button class="absolute right-48 bg-red-800 h-10 w-30 rounded-lg hover:bg-red-900" on:click={handleDeleteImage}>
-          Delete
-        </button>
-      {/if}
-
-      <p class="text-gray-300 pt-6 text-l">
-        Category <span class="font-semibold">{selectedImage.category}</span>
-      </p>
-
-      <hr class="my-4 border-gray-600" />
-      <p class="leading-relaxed text-xl">{selectedImage.description}</p>
-
-      <hr class="my-4 border-gray-600" />
-      <div class="mt-5">
-        <h3 class="text-3xl font-semibold">Comments</h3>
-        <br>
-        {#each comments as comment}
-          <p class="mt-2 text-xl">
-            ▪ {comment.comment}
-            <span class="text-gray-500 ml-2">{new Date(comment.created_at).toLocaleDateString("en-CA")}</span>
-          </p>
-        {/each}
-        <br>
-      </div>
-
-      <textarea class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400" bind:value={commentText} placeholder="Add comment ..."></textarea>
-      <button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded" on:click={handleAddComment}>
-        Add Comment
-      </button>
+    <hr class="my-4 border-gray-600" />
+    <div class="mt-5">
+      <h3 class="text-3xl font-semibold">Comments</h3>
+      <br>
+      {#each comments as comment}
+        <p class="mt-2 text-xl">
+          ▪ {comment.comment}
+          <span class="text-gray-500 ml-2">{new Date(comment.created_at).toLocaleDateString("en-CA")}</span>
+        </p>
+      {/each}
+      <br>
     </div>
+
+    <textarea class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400" bind:value={commentText} placeholder="Add comment ..."></textarea>
+    <button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded" on:click={handleAddComment}>
+      Add Comment
+    </button>
   </div>
+</div>
 {/if}
 
-<!-- <button on:click={startSlideshow} class="bg-gray-700 text-white px-4 py-2 rounded">Start Fullscreen Slideshow</button> -->
 
 {#if showSlideshow}
   <div class="fixed inset-0 bg-black flex items-center justify-center">

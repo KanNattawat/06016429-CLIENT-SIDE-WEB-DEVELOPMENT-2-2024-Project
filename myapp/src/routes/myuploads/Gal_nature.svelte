@@ -1,9 +1,9 @@
 <script>
   import { onMount } from "svelte";
-  import { user, fetchUser } from "../stores/gallery";
+  import { user, fetchUser } from "../../stores/gallery";
   import { goto } from "$app/navigation"; // Import goto for navigation
   import { fade, fly } from "svelte/transition"; // Import transitions
-  
+
   let images = [];
   let selectedImage = null;
   let selectedImageId = null;
@@ -73,25 +73,28 @@
   $user && console.log("Debugging User Store:", $user.id);
 
   async function fetchImages() {
-    try {
-      const response = await fetch("http://localhost:3000/files");
-      if (response.ok) {
-        const result = await response.json();
-        images = result.files.map((file) => ({
+  try {
+    const response = await fetch(`http://localhost:3000/myuploads/${encodeURIComponent($user.email)}`);
+    if (response.ok) {
+      const result = await response.json();
+      images = result.files
+        .filter((file) => file.owner_email === $user.email) // Filter images uploaded by the current user
+        .map((file) => ({
           id: file.id,
           url: file.filepath,
           name: file.name,
           description: file.description,
           category: file.category || "Uncategorized",
-          owner_email: file.owner_email // Ensure backend includes this
+          owner_email: $user.email // Ensure backend includes this
         }));
-      } else {
-        alert("Failed to fetch images!");
-      }
-    } catch (error) {
-      alert("Error fetching images: " + error);
+    } else {
+      alert("Failed to fetch images!");
     }
+  } catch (error) {
+    alert("Error fetching images: " + error);
   }
+}
+
 
   async function fetchComments(image_id) {
     try {
@@ -221,7 +224,7 @@
 
   async function fetchImage() {
     try {
-      const response = await fetch("http://localhost:3000/files");
+      const response = await fetch(`http://localhost:3000/myuploads/${encodeURIComponent($user.email)}`);
       if (response.ok) {
         const result = await response.json();
         img = result.files.map((file) => file.filepath);
@@ -229,7 +232,7 @@
         alert("Failed to fetch images!");
       }
     } catch (error) {
-      alert("Error fetching images: " + error);
+      alert("22 Error fetching images: " + error);
     }
   }
 

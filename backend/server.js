@@ -1,7 +1,8 @@
 const express = require("express");
 const session = require("express-session");
 const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy; 
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -38,7 +39,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// OAuth API
+// Google OAuth API
 passport.use(
   new GoogleStrategy(
     {
@@ -47,7 +48,23 @@ passport.use(
       callbackURL: `${process.env.BASE_URL}/auth/google/callback`,
     },
     (accessToken, refreshToken, profile, done) => {
-      console.log("User profile:", profile);
+      console.log("User profile:", profile, "\n--------------------");
+      return done(null, profile);
+    }
+  )
+);
+
+// Facebook OAuth API
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: `${process.env.BASE_URL}/auth/facebook/callback`,
+      profileFields: ["id", "displayName", "photos", "email"],
+    },
+    (accessToken, refreshToken, profile, done) => {
+      console.log("Facebook User profile:", profile, "\n--------------------");
       return done(null, profile);
     }
   )
@@ -66,13 +83,31 @@ passport.deserializeUser((user, done) => {
 // Route to initiate Google OAuth
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/" }), (req, res) => {
+  let user = req.user;
+  let split = user.displayName.trim().split(" ");
   req.session.user = {
-    picture: req.user.photos[0].value,
-    name: req.user.displayName,
-    email: req.user.emails[0].value,
+    picture: user.photos[0].value,
+    formatName: split.length > 1 ? `${split[0]} ${split[split.length - 1][0] + "."}` : user.displayName,
+    email: user.emails[0].value,
   };
+  console.log("Session:", req.session.user, "\n--------------------")
   res.redirect("http://localhost:5173");
 });
+
+// Route to initiate Facebook OAuth
+app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
+app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/" }), (req, res) => {
+    let user = req.user;
+    let split = user.displayName.trim().split(" ");
+    req.session.user = {
+      picture: user.photos[0].value,
+      formatName: split.length > 1 ? `${split[0]} ${split[split.length - 1][0] + "."}` : user.displayName,
+      email: user.emails ? user.emails[0].value : "No email provided",
+    };
+    console.log("Session:", req.session.user);
+    res.redirect("http://localhost:5173");
+  }
+);
 
 // Fetch user's data
 app.get("/auth/user", (req, res) => {
@@ -84,9 +119,15 @@ app.get("/auth/user", (req, res) => {
 
 // Logout route
 app.get("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) return next(err);
-    res.redirect("http://localhost:5173/");
+  req.session.destroy((err) => {
+      if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ message: "Logout failed" });
+      }
+
+      res.clearCookie("connect.sid", { path: "/" });
+      console.log("User logged out successfully");
+      res.json({ message: "Logged out successfully" });
   });
 });
 
@@ -128,7 +169,8 @@ async function initializeDatabase() {
       name TEXT,
       description TEXT,
       category TEXT,
-      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      owner_email TEXT
     );
   `;
   await pool.query(createImagesTableQuery);
@@ -498,4 +540,19 @@ app.get("/favorites/:email", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Get user's favorite images
+app.get("/myuploads/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM images WHERE owner_email = $1 ORDER BY uploaded_at DESC",
+      [email]
+    );
+    res.json({ files: result.rows });  // Changed from 'favorites' to 'files'
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
