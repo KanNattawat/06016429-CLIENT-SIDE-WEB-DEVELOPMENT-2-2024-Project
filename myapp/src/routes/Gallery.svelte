@@ -17,64 +17,69 @@
   // Fetch data
   onMount(() => {
     fetchUser();
+    fetchFavorites();
     fetchImages();
     fetchComments();
     handleAddComment();
-    fetchFavorites();
   });
 
   // FAV
   let favorites = new Set();
 
   async function toggleFavorite(imageId) {
-    if (!user) return alert("Please log in to favorite images!");
-
-    const isFavorite = favorites.has(imageId);
-    const method = isFavorite ? "DELETE" : "POST";
-    
-    try {
-      await fetch("http://localhost:3000/favorite", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
-      });
-
-      // **Create a new Set to trigger reactivity**
-      favorites = new Set(favorites);
-
-      if (isFavorite) {
-        favorites.delete(imageId);
-      } else {
-        favorites.add(imageId);
+      if (!user) return alert("Please log in to favorite images!");
+  
+      const isFavorite = favorites.has(imageId);
+      const method = isFavorite ? "DELETE" : "POST";
+      
+      try {
+        await fetch("http://localhost:3000/favorite", {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
+        });
+  
+        // **Create a new Set to trigger reactivity**
+        favorites = new Set(favorites);
+  
+        if (isFavorite) {
+          favorites.delete(imageId);
+        } else {
+          favorites.add(imageId);
+        }
+  
+        // Save the updated favorites to localStorage
+        localStorage.setItem('favorites', JSON.stringify([...favorites]));
+      } catch (error) {
+        console.error("Error toggling favorite:", error);
       }
-
-      // Save the updated favorites to localStorage
-      localStorage.setItem('favorites', JSON.stringify([...favorites]));
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
     }
-  }
-
+  
   async function fetchFavorites() {
-    if (!user) return;
+  if (!user) return;
 
-    // Retrieve favorites from localStorage
-    const storedFavorites = localStorage.getItem('favorites');
-    if (storedFavorites) {
-      favorites = new Set(JSON.parse(storedFavorites));
-    }
-
-    try {
-      const response = await fetch(`http://localhost:3000/favorites/${encodeURIComponent($user.email)}`);
-      const data = await response.json();
-
-      // Ensure the image ID is correctly referenced here as 'id' instead of 'image_id'
-      favorites = new Set(data.favorites.map((selectedImageId) => selectedImageId));
-      console.log(favorites);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-    }
+  // โหลดค่าจาก localStorage
+  const storedFavorites = localStorage.getItem('favorites');
+  if (storedFavorites) {
+    favorites = new Set(JSON.parse(storedFavorites));
   }
+
+  try {
+    const response = await fetch(`http://localhost:3000/favorites/${encodeURIComponent($user.email)}`);
+    const data = await response.json();
+
+    if (data.favorites && Array.isArray(data.favorites)) {
+      favorites = new Set(data.favorites.map(fav => fav.image_id || fav.id));
+    } else {
+      console.error("Invalid favorites response:", data);
+    }
+
+    console.log("Updated favorites:", favorites);
+  } catch (error) {
+    console.error("Error fetching favorites:", error);
+  }
+}
+
 
   $user && console.log("Debugging User Store:", $user.id);
 
