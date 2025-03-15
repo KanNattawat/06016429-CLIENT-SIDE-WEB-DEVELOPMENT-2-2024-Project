@@ -72,7 +72,8 @@ export async function fetchImages() {
                 name: file.name,
                 description: file.description,
                 category: file.category || "Uncategorized",
-                owner_email: file.owner_email || "Anonymous"
+                owner_email: file.owner_email || "Anonymous",
+                visibility: file.visibility || "Public",
             })));
         } else {
             alert("Failed to fetch images!");
