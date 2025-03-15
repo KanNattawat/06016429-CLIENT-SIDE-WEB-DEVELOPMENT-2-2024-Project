@@ -143,17 +143,19 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Multer storage configuration
+const { v4: uuidv4 } = require('uuid');
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const filename = Date.now() + path.extname(file.originalname);
-    cb(null, filename);
+    const uniqueName = `${Date.now()}-${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
   },
 });
-
 const upload = multer({ storage: storage });
+
 
 // Serve static files
 app.use("/uploads", express.static(uploadDir));
@@ -206,23 +208,23 @@ async function initializeDatabase() {
 initializeDatabase();
 
 // API endpoint to create a category
-app.post("/category", async (req, res) => {
-  try {
-    const { name } = req.body;
+// app.post("/category", async (req, res) => {
+//   try {
+//     const { name } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ message: "Category name is required" });
-    }
+//     if (!name) {
+//       return res.status(400).json({ message: "Category name is required" });
+//     }
 
-    const insertQuery = "INSERT INTO categories (name) VALUES ($1) RETURNING *";
-    const result = await pool.query(insertQuery, [name]);
+//     const insertQuery = "INSERT INTO categories (name) VALUES ($1) RETURNING *";
+//     const result = await pool.query(insertQuery, [name]);
 
-    res.status(201).json({ message: "Category created successfully", category: result.rows[0] });
-  } catch (error) {
-    console.error("Error creating category:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
+//     res.status(201).json({ message: "Category created successfully", category: result.rows[0] });
+//   } catch (error) {
+//     console.error("Error creating category:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
 
 // API endpoint to get all categories
 app.get("/categories", async (req, res) => {

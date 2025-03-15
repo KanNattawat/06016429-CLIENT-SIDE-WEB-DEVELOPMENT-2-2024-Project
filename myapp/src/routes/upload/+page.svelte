@@ -20,53 +20,53 @@
     onMount(fetchUser);
 
     async function handleUpload(event) {
-        event.preventDefault();
+    event.preventDefault();
 
-        if (!$user) {
-            alert("User not authenticated. Please log in.");
-            return;
-        }
-
-        if (files.length === 0) {
-            alert("Please select files to upload.");
-            return;
-        }
-
-        const formData = new FormData();
-        files.forEach(file => formData.append("images", file));
-
-        if (files.length === 1 && name.trim() === "") {
-            alert("Please enter a name for the file.");
-            return;
-        }
-
-        formData.append("filename", name);
-        formData.append("description", description);
-
-        if (!category) {
-            alert("Please select a category.");
-            return;
-        }
-        
-        formData.append("category", category);
-        formData.append("owner_email", $user.email);
-
-        const response = await fetch("http://localhost:3000/upload", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (response.ok) {
-            alert("Upload Success!");
-            files = [];
-            name = "";
-            description = "";
-            category = "";
-            window.location.href = "http://localhost:5173/";
-        } else {
-            alert("Upload failed. Please try again.");
-        }
+    if (!$user) {
+        alert("User not authenticated. Please log in.");
+        return;
     }
+
+    if (files.length === 0) {
+        alert("Please select files to upload.");
+        return;
+    }
+
+    const formData = new FormData();
+
+    files.forEach((file, index) => {
+        formData.append(`images`, file);
+        formData.append(`owner_email[${index}]`, $user.email); // Append for each file
+        formData.append(`category[${index}]`, category); // Append for each file
+        formData.append(`filename[${index}]`, name); // Append for each file
+        // formData.append(`category[${index}]`, category); // Append for each file
+    });
+
+    if (files.length === 1 && name.trim() === "") {
+        alert("Please enter a name for the file.");
+        return;
+    }
+
+    // formData.append("filename", name);
+    formData.append("description", description);
+
+    const response = await fetch("http://localhost:3000/upload", {
+        method: "POST",
+        body: formData,
+    });
+
+    if (response.ok) {
+        alert("Upload Success!");
+        files = [];
+        name = "";
+        description = "";
+        category = "";
+        window.location.href = "http://localhost:5173/";
+    } else {
+        alert("Upload failed. Please try again.");
+    }
+}
+
 
     function handleClick(event) {
         let fileInput = document.getElementById("fileInput");
