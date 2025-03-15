@@ -263,24 +263,21 @@
 
 <div class="masonry p-5">
   {#each $images as img (img.id)}
-    <div
-      class="cursor-pointer transition-transform transform hover:scale-105"
-      on:click={() =>
-        openImage(
-          img.url,
-          img.id,
-          img.name,
-          img.description,
-          img.category,
-          img.owner_email,
-        )}
-    >
-      <img
-        class="w-full h-auto rounded-lg"
+    <button 
+    class="cursor-pointer transition-transform transform hover:scale-105 w-full"
+    on:click={() => openImage(
+        img.url,
+        img.id,
+        img.name,
+        img.description,
+        img.category,
+        img.owner_email
+    )}>
+      <img class="w-full h-auto rounded-lg"
         src={img.url}
-        alt="Uploaded image"
+        alt={img.name || img.description || "Upload Image"}
       />
-    </div>
+    </button>
   {/each}
 </div>
 
@@ -289,12 +286,12 @@
     class="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center overflow-auto"
     transition:fade={{ duration: 100 }}
   >
-    <p
+    <button
       class="absolute top-25 left-10 text-white text-xl rounded cursor-pointer p-5 font-bold"
       on:click={closePreview}
     >
       Close
-    </p>
+    </button>
 
     <img
       class="w-fit pt-25 mt-4 cursor-pointer pt-0"

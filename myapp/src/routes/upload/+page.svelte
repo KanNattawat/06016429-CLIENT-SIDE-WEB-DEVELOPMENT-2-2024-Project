@@ -7,6 +7,7 @@
     let name = "";
     let description = "";
     let category = "";
+    let visibility = "Public";
     let dragging = false;
     
     let categories = [
@@ -50,6 +51,7 @@
         
         formData.append("category", category);
         formData.append("owner_email", $user.email);
+        formData.append("visibility", visibility);
 
         const response = await fetch("http://localhost:3000/upload", {
             method: "POST",
@@ -62,6 +64,7 @@
             name = "";
             description = "";
             category = "";
+            visibility = "Public";
             window.location.href = "http://localhost:5173/";
         } else {
             alert("Upload failed. Please try again.");
@@ -98,7 +101,7 @@
 
 <div class="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] p-10 bg-gray-900">
     <form class="bg-white p-6 rounded-lg shadow-md w-96" on:submit={handleUpload}>
-        <a href="http://localhost:5173/"><button class="py-2 px-4 rounded-xl border-2 text-white bg-blue-800 border-indigo-800 hover:bg-blue-600">Back</button></a>
+        <a href="http://localhost:5173/"><button class="py-2 px-4 rounded-xl border-2 text-white bg-blue-600 border-blue-800 hover:bg-blue-800">Back</button></a>
         <h2 class="text-xl font-semibold mb-4 text-center">Upload Images</h2>
 
         <div
@@ -173,6 +176,17 @@
                     <option value={categoryItem.name}>{categoryItem.name}</option>
                 {/each}
             </select>
+        {/if}
+
+        {#if files.length}
+            <div>
+                <label>
+                    <input type="radio" bind:group={visibility} value="Public" checked>Public
+                </label>
+                <label>
+                    <input type="radio" bind:group={visibility} value="Private">Private
+                </label>
+            </div>
         {/if}
 
         <button type="submit" class="w-full mt-4 bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg">

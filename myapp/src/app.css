@@ -8,13 +8,22 @@
 .masonry img {
     width: 100%; /* Makes the width of the image fit the column */
     display: block;
+    object-fit: cover;
     break-inside: avoid; /* Prevent images from breaking across columns */
     margin-bottom: 16px; /* Space between images */
     border-radius: 8px; /* Optional: rounded corners */
 }
 
+html {
+    overflow-y: scroll; /* Always show vertical scrollbar */
+}
+
 body {  
-    padding-top: 5rem;
+    padding-top: 4rem;
+}
+
+button:hover {
+    cursor: pointer;
 }
 
 @media (min-width: 768px) {
@@ -27,8 +36,4 @@ body {
     .masonry {
         columns: 6;
     }
-}
-
-button:hover {
-    cursor: pointer;
 }

@@ -170,7 +170,8 @@ async function initializeDatabase() {
       description TEXT,
       category TEXT,
       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      owner_email TEXT
+      owner_email TEXT,
+      visibility TEXT DEFAULT 'Public'
     );
   `;
   await pool.query(createImagesTableQuery);
@@ -238,7 +239,7 @@ app.get("/categories", async (req, res) => {
 // API endpoint to upload images with categories
 app.post(
   "/upload",
-  upload.fields([{ name: "images", maxCount: 10 }, { name: "filename" }, { name: "description" }, { name: "category" }, { name: "owner_email"}]),
+  upload.fields([{ name: "images", maxCount: 10 }, { name: "filename" }, { name: "description" }, { name: "category" }, { name: "owner_email"}, { name: "visibility"}]),
   async (req, res) => {
     console.log("Received files:", req.files);
     console.log("Received body:", req.body);
@@ -248,7 +249,8 @@ app.post(
       const fileNames = req.body.filename;
       const descrip = req.body.description;
       const categoryId = req.body.category;
-      const ownerId = req.body.owner_email
+      const ownerId = req.body.owner_email;
+      const visibility = req.body.visibility;
 
       if (!files || files.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
@@ -258,18 +260,20 @@ app.post(
       const desArray = Array.isArray(descrip) ? descrip : [descrip];
       const cateArray = Array.isArray(categoryId) ? categoryId : [categoryId];
       const ownArray = Array.isArray(ownerId) ? ownerId : [ownerId];
+      const visArray = Array.isArray(visibility) ? visibility : [visibility];
 
       const fileRecords = files.map((file, index) => ({
         filename: file.filename,
         filepath: `/uploads/${file.filename}`,
         name: nameArray[index] || file.originalname,
         description: desArray[index] || "",
-        category: cateArray[index] || null,
-        owner_email: ownArray[index] || null,
+        category: cateArray[index] || "Uncategorized",
+        owner_email: ownArray[index] || "Anonymous",
+        visibility: visArray[index] || "Public",
       }));
 
       const insertQuery =
-        "INSERT INTO images (filename, filepath, name, description, category, owner_email) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *";
+        "INSERT INTO images (filename, filepath, name, description, category, owner_email, visibility) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *";
 
       const uploadedFiles = [];
       for (const file of fileRecords) {
@@ -280,6 +284,7 @@ app.post(
           file.description,
           file.category,
           file.owner_email,
+          file.visibility,
         ]);
         uploadedFiles.push(result.rows[0]);
       }
@@ -340,7 +345,7 @@ app.get("/images/category/:category_id", async (req, res) => {
 // API endpoint to get all images
 app.get("/files", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' ORDER BY uploaded_at DESC");
     res.status(200).json({ files: result.rows });
   } catch (error) {
     console.error("Error fetching files:", error);
@@ -351,7 +356,7 @@ app.get("/files", async (req, res) => {
 // API endpoint to get images in the "Nature" category
 app.get("/nature", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE category = 'Nature' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Nature' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -362,7 +367,7 @@ app.get("/nature", async (req, res) => {
 
 app.get("/animals", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE category = 'Animals' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Animals' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -373,7 +378,7 @@ app.get("/animals", async (req, res) => {
 
 app.get("/technology", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE category = 'Technology' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Technology' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -384,7 +389,7 @@ app.get("/technology", async (req, res) => {
 
 app.get("/architecture", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE category = 'Architecture' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Architecture' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -395,7 +400,7 @@ app.get("/architecture", async (req, res) => {
 
 app.get("/food", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE category = 'Food' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHEREvisibility = 'Public' AND category = 'Food' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
