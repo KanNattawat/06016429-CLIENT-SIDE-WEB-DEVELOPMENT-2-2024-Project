@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+html {
+    overflow-y: scroll; /* Always show vertical scrollbar */
+}
+
+body {  
+    padding-top: 4.72rem;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
 .masonry {
     columns: 2; /* Number of columns */
     column-gap: 16px; /* Space between columns */
@@ -12,18 +24,6 @@
     break-inside: avoid; /* Prevent images from breaking across columns */
     margin-bottom: 16px; /* Space between images */
     border-radius: 8px; /* Optional: rounded corners */
-}
-
-html {
-    overflow-y: scroll; /* Always show vertical scrollbar */
-}
-
-body {  
-    padding-top: 4rem;
-}
-
-button:hover {
-    cursor: pointer;
 }
 
 @media (min-width: 768px) {
