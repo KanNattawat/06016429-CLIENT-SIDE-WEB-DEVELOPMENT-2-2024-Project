@@ -19,9 +19,7 @@
       </p>
 
       <!-- Gallery Component -->
-       {#if $user}
       <Gallery />
-      {/if}
   </main>
 
   <!-- Footer -->

@@ -83,6 +83,35 @@ export async function fetchImages(page) {
     }
 }
 
+export async function fetchFavoriteImages(favorites) {
+    try {
+        const response = await fetch("http://localhost:3000/files"); // ดึงภาพทั้งหมด
+        if (response.ok) {
+            const result = await response.json();
+            // Check if favorites is an array and filter based on its contents
+            if (!Array.isArray(favorites)) {
+                images.set(result.files
+                    .filter(file => favorites.has(file.id)) // กรองเฉพาะภาพที่ถูกใจ
+                    .map(file => ({
+                        id: file.id,
+                        url: file.filepath,
+                        name: file.name,
+                        description: file.description,
+                        category: file.category || "Uncategorized",
+                        visibility: file.visibility || "Public",
+                    })));
+            } else {
+                console.error("Favorites must be an array!");
+            }
+        } else {
+            console.error("Failed to fetch images!");
+        }
+    } catch (error) {
+        console.error("Error fetching images:", error);
+    }
+}
+
+
 export function openImage(url, id, name, description, category, owner_email) {
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
