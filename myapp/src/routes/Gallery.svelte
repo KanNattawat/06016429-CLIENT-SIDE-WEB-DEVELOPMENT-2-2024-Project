@@ -163,11 +163,13 @@
   }
 
   if (!document.fullscreenElement) {
+    document.getElementById("pre_img").setAttribute("class", "w-fit pt-0 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]");
     img.requestFullscreen?.() ||
     img.mozRequestFullScreen?.() ||
     img.webkitRequestFullscreen?.() ||
     img.msRequestFullscreen?.();
   } else {
+    document.getElementById("pre_img").setAttribute("class", "w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]");
     document.exitFullscreen?.() ||
     document.mozCancelFullScreen?.() ||
     document.webkitExitFullscreen?.() ||
@@ -265,7 +267,7 @@
       </button>
 
       <img
-        class="w-fit pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
+        class="w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
         src={$selectedImage.url}
         alt="Preview"
         id="pre_img"

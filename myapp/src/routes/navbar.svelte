@@ -59,7 +59,7 @@ onDestroy(() => {
 });
 </script>
 
-<nav id="naver" class="fixed top-0 left-0 w-full h-[10%] z-50 bg-gray-800 p-4 text-white shadow-md flex justify-between items-center">
+<nav id="naver" class="fixed top-0 left-0 w-full z-50 bg-gray-800 p-4 text-white shadow-md flex justify-between items-center">
     <button class="md:hidden p-2 bg-gray-700 rounded" on:click={toggleSidebar}>
         {isOpen ? "✖" : "☰"}
     </button>
