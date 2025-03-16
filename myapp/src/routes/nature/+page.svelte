@@ -3,8 +3,10 @@
     import { user, fetchUser } from "../../stores/gallery";
     import { goto } from "$app/navigation"; // Import goto for navigation
     import { fade, fly } from "svelte/transition"; // Import transitions
-    import Gallery from "../nature/Gal_nature.svelte";
+    import Gallery from "../Gallery.svelte";
     import Navbar from "../navbar.svelte";
+    import { fetchImages } from "../../stores/gallery";
+
 </script>
 
 <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 to-gray-800 text-white">
@@ -19,7 +21,7 @@
         </p>
 
         <!-- Gallery Component -->
-        <Gallery />
+        <Gallery filter="nature" />
     </main>
 
     <!-- Footer -->

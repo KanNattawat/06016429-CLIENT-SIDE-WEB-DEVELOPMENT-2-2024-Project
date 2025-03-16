@@ -12,12 +12,13 @@
   let currentIndex = 0;
   let interval;
   let showSlideshow = false;
+  export let filter = "files";
 
   // Fetch data
   onMount(() => {
     fetchUser();
     fetchFavorites();
-    fetchImages("files");
+    fetchImages(filter);
     openImage();
     closePreview();
   });
@@ -162,31 +163,22 @@
   }
 
   if (!document.fullscreenElement) {
-    if (img.requestFullscreen) {
-      img.requestFullscreen();
-    } else if (img.mozRequestFullScreen) { // Firefox
-      img.mozRequestFullScreen();
-    } else if (img.webkitRequestFullscreen) { // Chrome, Safari, Opera
-      img.webkitRequestFullscreen();
-    } else if (img.msRequestFullscreen) { // IE/Edge
-      img.msRequestFullscreen();
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-    }
+    img.requestFullscreen?.() ||
+    img.mozRequestFullScreen?.() ||
+    img.webkitRequestFullscreen?.() ||
+    img.msRequestFullscreen?.();
+  } else {
+    document.exitFullscreen?.() ||
+    document.mozCancelFullScreen?.() ||
+    document.webkitExitFullscreen?.() ||
+    document.msExitFullscreen?.();
   }
 }
 
+
   async function fetchImage() {
     try {
-      const response = await fetch("http://localhost:3000/files");
+      const response = await fetch(`http://localhost:3000/${filter}`);
       if (response.ok) {
         const result = await response.json();
         img = result.files.map((file) => file.filepath);
@@ -246,25 +238,21 @@
   class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button
 >
 {#if $images}
-  <div class="masonry p-5">
-    {#each $images as img (img.id)}
-      <button 
-      class="cursor-pointer transition-transform transform hover:scale-105 w-full"
-      on:click={() => openImage(
-          img.url,
-          img.id,
-          img.name,
-          img.description,
-          img.category,
-          img.owner_email
-      )}>
-        <img class="w-full h-auto rounded-lg"
-          src={img.url}
-          alt={img.name || img.description || "Upload Image"}
-        />
-      </button>
-    {/each}
-  </div>
+<div class="masonry p-5">
+  {#each $images as img (img.id)}
+    <div
+      class="cursor-pointer transition-transform transform hover:scale-105"
+      on:click={() =>
+        openImage(img.url, img.id, img.name, img.description, img.category, img.owner_email)}
+    >
+      <img
+        class="w-full h-auto rounded-lg"
+        src={img.url}
+        alt="Uploaded image"
+      />
+    </div>
+  {/each}
+</div>
 
   {#if $selectedImage}
     <div
@@ -277,7 +265,7 @@
       </button>
 
       <img
-        class="w-fit pt-25 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
+        class="w-fit pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
         src={$selectedImage.url}
         alt="Preview"
         id="pre_img"
@@ -285,7 +273,7 @@
       />
 
       <div
-        class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg w-full px-25 py-10 mt-5"
+        class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg w-full px-25 py-10 mt-0"
       >
         <h3 class="text-4xl font-bold inline">{$selectedImage.name}</h3>
 

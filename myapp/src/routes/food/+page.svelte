@@ -3,8 +3,10 @@
     import { user, fetchUser } from "../../stores/gallery";
     import { goto } from "$app/navigation"; // Import goto for navigation
     import { fade, fly } from "svelte/transition"; // Import transitions
-    import Gallery from "../food/Gal_nature.svelte";
+    import Gallery from "../Gallery.svelte";
     import Navbar from "../navbar.svelte";
+    import { fetchImages } from "../../stores/gallery";
+
 </script>
 
 <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 to-gray-800 text-white">
@@ -13,13 +15,13 @@
 
     <!-- Main Content Wrapper -->
     <main class="flex-1 flex flex-col items-center justify-start pt-10">
-        <h1 class="text-3xl md:text-4xl font-bold mb-6 text-center">Food</h1>
+        <h1 class="text-3xl md:text-4xl font-bold mb-6 text-center">Foods</h1>
         <p class="text-lg text-gray-300 text-center mb-8 max-w-2xl">
             Explore and manage your image gallery with ease. Upload, edit, and organize your images seamlessly.
         </p>
 
         <!-- Gallery Component -->
-        <Gallery />
+        <Gallery filter="food" />
     </main>
 
     <!-- Footer -->

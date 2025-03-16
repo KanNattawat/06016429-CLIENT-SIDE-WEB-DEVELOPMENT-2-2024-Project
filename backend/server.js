@@ -402,14 +402,17 @@ app.get("/architecture", async (req, res) => {
 
 app.get("/food", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHEREvisibility = 'Public' AND category = 'Food' ORDER BY uploaded_at DESC");
-    
+    const result = await pool.query(
+      "SELECT * FROM images WHERE visibility = 'Public' AND category = 'Food' ORDER BY uploaded_at DESC"
+    );
+
     res.status(200).json({ files: result.rows });
   } catch (error) {
-    console.error("Error fetching Nature category images:", error);
+    console.error("Error fetching Food category images:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 
 // API endpoint to add a comment to an image
