@@ -277,7 +277,7 @@ async function fetchImage() {
       </button>
 
       <img
-        class="w-fit pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
+        class="w-fit pt-18 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
         src={$selectedImage.url}
         alt="Preview"
         id="pre_img"
