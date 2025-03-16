@@ -6,8 +6,8 @@ export let user = writable(null);
 export let images = writable([]);
 export let selectedImage = writable(null);
 export let selectedImageId = writable(null);
-export let commentText = writable("");
 export let comments = writable([]);
+export let commentText = writable("");
 export let img = writable([]);
 export let currentIndex = writable(0);
 export let showSlideshow = writable(false);
@@ -115,12 +115,26 @@ export async function fetchFavoriteImages(favorites) {
 export function openImage(url, id, name, description, category, owner_email) {
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
-    // fetchComments(id);
+    console.log(id, selectedImageId);
+    // fetchComments(selectedImageId);
 }
 
 export function closePreview() {
     selectedImage.set(null);
     selectedImageId.set(null);
+}
+
+export async function fetchComments(image_id) {
+    try {
+        const response = await fetch(
+            `http://localhost:3000/comments/${image_id}`,
+        );
+        const data = await response.json();
+        comments.set(data.comments);
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        comments.set([]);
+    }
 }
 
 export async function handleAddComment() {
@@ -138,26 +152,13 @@ export async function handleAddComment() {
 
         if (response.ok) {
             const result = await response.json();
-            comments = [...comments, result.comment];
-            commentText = "";
+            comments.set([...comments, result.comment]);
+            commentText.set("");
         } else {
             alert("Failed to add comment!");
         }
     } catch (error) {
         console.error("Error posting comment:", error);
-    }
-}
-
-async function fetchComments(image_id) {
-    try {
-        const response = await fetch(
-            `http://localhost:3000/comments/${image_id}`,
-        );
-        const data = await response.json();
-        comments = data.comments;
-    } catch (error) {
-        console.error("Error fetching comments:", error);
-        comments = [];
     }
 }
 
