@@ -21,7 +21,7 @@
 
 <Navbar />
 
-<div class="flex items-center justify-center min-h-[calc(100vh-5rem)] p-10 bg-gray-900">
+<div class="flex items-center justify-center min-h-[calc(100vh-4.72rem)] p-10 bg-gray-900">
   <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
     
     <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Welcome to <a href="/" class="text-blue-600 hover:text-blue-800">Pesterine!</a></h2>

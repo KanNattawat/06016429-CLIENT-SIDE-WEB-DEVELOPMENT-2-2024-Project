@@ -61,9 +61,9 @@ export async function logout() {
     }
 }
 
-export async function fetchImages() {
+export async function fetchImages(page) {
     try {
-        const response = await fetch("http://localhost:3000/files");
+        const response = await fetch(`http://localhost:3000/${page}`);
         if (response.ok) {
             const result = await response.json();
             images.set(result.files.map((file) => ({
@@ -81,6 +81,17 @@ export async function fetchImages() {
     } catch (error) {
         alert("Error fetching images: " + error);
     }
+}
+
+export function openImage(url, id, name, description, category, owner_email) {
+    selectedImage.set({ url, id, name, description, category, owner_email });
+    selectedImageId.set(id);
+    // fetchComments(id);
+}
+
+export function closePreview() {
+    selectedImage.set(null);
+    selectedImageId.set(null);
 }
 
 export async function handleAddComment() {
@@ -147,19 +158,6 @@ export async function handleDeleteImage() {
     } catch (error) {
         console.error("Error deleting image:", error);
     }
-}
-
-export function openImage(url, id, name, description, category, owner_email) {
-    selectedImage.set({ url, id, name, description, category, owner_email });
-    selectedImageId.set(id);
-    fetchComments(id);
-    document.getElementById("naver").style.visibility = "hidden";
-}
-
-export function closePreview() {
-    selectedImage.set(null);
-    selectedImageId.set(null);
-    document.getElementById("naver").style.visibility = "visible";
 }
 
 export function toggleFullscreen() {

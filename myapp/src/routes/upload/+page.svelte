@@ -9,6 +9,10 @@
     let category = "";
     let visibility = "Public";
     let dragging = false;
+    let vis = true;
+    let pos = 0;
+    let swipe = false;
+    let buttonWidth = 0;
     
     let categories = [
         { id: 1, name: "Nature" },
@@ -18,7 +22,33 @@
         { id: 5, name: "Food" },
     ];
 
-    onMount(fetchUser);
+    onMount(() => {
+        fetchUser();
+        buttonWidth = document.querySelector('.swipe-container')?.offsetWidth || 100;
+    });
+
+    function toggleVisibility() {
+        vis = !vis;
+        pos = vis ? buttonWidth - 40 : 0;
+        console.log(vis);
+    }
+
+    function startSwiping(event) {
+        swipe = true;
+    }
+
+    function onSwiping(event) {
+        if (!swipe) return;
+        let clientX = event.touches ? event.touches[0].clientX : event.clientX;
+        let newPos = Math.min(Msth.max(clientX - 20, 0), buttonWidth - 40);
+        pos = newPos;
+    }
+
+    function endSwiping() {
+        swipe = false;
+        vis = pos > (buttonWidth / 2);
+        pos = vis ? buttonWidth - 40 : 0;
+    }
 
     async function handleUpload(event) {
     event.preventDefault();
@@ -104,11 +134,45 @@
     }
 </script>
 
+<style>
+    .swipe-container {
+      width: 150px;
+      height: 50px;
+      background: linear-gradient(to right, #4caf50, #2196F3);
+      border-radius: 25px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+  
+    .swipe-button {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 5px;
+      left: 0;
+      transition: left 0.3s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+  
+    .private {
+      background: linear-gradient(to right, #f44336, #ff9800) !important;
+    }
+</style>
+
 <Navbar />
 
-<div class="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] p-10 bg-gray-900">
+<div class="flex flex-col items-center justify-center min-h-[calc(100vh-4.72rem)] p-10 bg-gray-900">
     <form class="bg-white p-6 rounded-lg shadow-md w-96" on:submit={handleUpload}>
-        <a href="http://localhost:5173/"><button class="py-2 px-4 rounded-xl border-2 text-white bg-blue-600 border-blue-800 hover:bg-blue-800">Back</button></a>
+        <a href="http://localhost:5173/"><button class="py-2 px-4 rounded-xl border-2 text-white bg-blue-600 border-indigo-800 hover:bg-blue-800">Back</button></a>
         <h2 class="text-xl font-semibold mb-4 text-center">Upload Images</h2>
 
         <div
@@ -186,13 +250,15 @@
         {/if}
 
         {#if files.length}
-            <div>
-                <label>
-                    <input type="radio" bind:group={visibility} value="Public" checked>Public
-                </label>
-                <label>
-                    <input type="radio" bind:group={visibility} value="Private">Private
-                </label>
+            <div class="swipe-container {vis ? 'private' : ''}"
+                on:click={toggleVisibility}
+                on:mousedown={startSwiping}
+                on:touchstart={startSwiping}
+                on:mousemove={onSwiping}
+                on:touchmove={onSwiping}
+                on:mouseup={endSwiping}
+                on:touchend={endSwiping}>
+                <button class="swipe-button" style="left: {pos}px;">{vis ? '🔒' : '🔓'}</button>
             </div>
         {/if}
 

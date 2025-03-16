@@ -64,7 +64,7 @@ onDestroy(() => {
         {isOpen ? "✖" : "☰"}
     </button>
     
-    <a href="/" class="text-2xl font-bold">Pesterin</a>
+    <a href="/" class="text-2xl font-bold p-3 hover:text-blue-400">Pesterin</a>
     
     <div class="hidden md:flex space-x-4">
         {#each categories as category}
@@ -74,17 +74,16 @@ onDestroy(() => {
 
     <div class="relative">
         {#if $user}
-            <button on:click={toggleDropdown} class="dropdown-btn flex items-center space-x-2">
+            <button on:click={toggleDropdown} class="dropdown-btn group flex items-center space-x-2 hover:bg-gray-900 px-3 py-2 rounded-4xl">
                 <span>{$user.formatName}</span>
-                <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400" />
+                <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 group-hover:brightness-85" />
             </button>
             {#if dropdown}
                 <div class="dropdown-menu absolute right-0 bg-white text-black rounded-lg shadow-md mt-2 w-40">
-                    <!-- <a href=""></a> -->
-                    <a href="/upload" class="block px-4 py-2 hover:bg-gray-200">Upload</a>
+                    <a href="/upload" class="block px-4 py-2 hover:bg-gray-200 hover:rounded-lg">Upload</a>
                     <a href="/myuploads" class="block px-4 py-2 hover:bg-gray-200">My Uploads</a>
                     <a href="/favorites" class="block px-4 py-2 hover:bg-gray-200">Favorites</a>
-                    <button on:click={logout} class="block w-full text-left px-4 py-2 hover:bg-gray-200">Log Out</button>
+                    <button on:click={logout} class="block w-full text-left px-4 py-2 hover:bg-gray-200 hover:rounded-lg">Log Out</button>
                 </div>
             {/if}
         {:else}
