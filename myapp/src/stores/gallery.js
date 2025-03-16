@@ -73,7 +73,7 @@ export async function fetchImages(page) {
                 description: file.description,
                 category: file.category || "Uncategorized",
                 owner_email: file.owner_email || "Anonymous",
-                visibility: file.visibility || "Public",
+                visibility: file.visibility,
             })));
         } else {
             alert("Failed to fetch images!");
@@ -98,7 +98,7 @@ export async function fetchFavoriteImages(favorites) {
                         name: file.name,
                         description: file.description,
                         category: file.category || "Uncategorized",
-                        visibility: file.visibility || "Public",
+                        visibility: file.visibility,
                     })));
             } else {
                 console.error("Favorites must be an array!");

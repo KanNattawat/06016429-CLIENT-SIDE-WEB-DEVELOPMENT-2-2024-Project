@@ -173,7 +173,7 @@ async function initializeDatabase() {
       category TEXT,
       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       owner_email TEXT,
-      visibility TEXT DEFAULT 'Public'
+      visibility TEXT DEFAULT TRUE
     );
   `;
   await pool.query(createImagesTableQuery);
@@ -271,7 +271,7 @@ app.post(
         description: desArray[index] || "",
         category: cateArray[index] || "Uncategorized",
         owner_email: ownArray[index] || "Anonymous",
-        visibility: visArray[index] || "Public",
+        visibility: visArray[index] || true,
       }));
 
       const insertQuery =
@@ -347,7 +347,7 @@ app.get("/images/category/:category_id", async (req, res) => {
 // API endpoint to get all images
 app.get("/files", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE ORDER BY uploaded_at DESC");
     res.status(200).json({ files: result.rows });
   } catch (error) {
     console.error("Error fetching files:", error);
@@ -358,7 +358,7 @@ app.get("/files", async (req, res) => {
 // API endpoint to get images in the "Nature" category
 app.get("/nature", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Nature' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE AND category = 'Nature' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -369,7 +369,7 @@ app.get("/nature", async (req, res) => {
 
 app.get("/animals", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Animals' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE AND category = 'Animals' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -380,7 +380,7 @@ app.get("/animals", async (req, res) => {
 
 app.get("/technology", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Technology' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE AND category = 'Technology' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -391,7 +391,7 @@ app.get("/technology", async (req, res) => {
 
 app.get("/architecture", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM images WHERE visibility = 'Public' AND category = 'Architecture' ORDER BY uploaded_at DESC");
+    const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE AND category = 'Architecture' ORDER BY uploaded_at DESC");
     
     res.status(200).json({ files: result.rows });
   } catch (error) {
@@ -403,7 +403,7 @@ app.get("/architecture", async (req, res) => {
 app.get("/food", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM images WHERE visibility = 'Public' AND category = 'Food' ORDER BY uploaded_at DESC"
+      "SELECT * FROM images WHERE visibility = TRUE AND category = 'Food' ORDER BY uploaded_at DESC"
     );
 
     res.status(200).json({ files: result.rows });
@@ -484,7 +484,7 @@ app.delete("/image/:id", async (req, res) => {
 app.put("/image/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, category } = req.body;
+    const { name, description, category, visibility } = req.body;
 
     // Check if the image exists
     const imageResult = await pool.query("SELECT * FROM images WHERE id = $1", [id]);
@@ -495,12 +495,12 @@ app.put("/image/:id", async (req, res) => {
     // Update query
     const updateQuery = `
       UPDATE images 
-      SET name = $1, description = $2, category = $3
-      WHERE id = $4
+      SET name = $1, description = $2, category = $3, visibility = $4
+      WHERE id = $5
       RETURNING *;
     `;
 
-    const result = await pool.query(updateQuery, [name, description, category, id]);
+    const result = await pool.query(updateQuery, [name, description, category, visibility, id]);
 
     res.status(200).json({ message: "Image updated successfully", image: result.rows[0] });
   } catch (error) {
@@ -559,10 +559,18 @@ app.get("/myuploads/:email", async (req, res) => {
       "SELECT * FROM images WHERE owner_email = $1 ORDER BY uploaded_at DESC",
       [email]
     );
-    res.json({ files: result.rows });  // Changed from 'favorites' to 'files'
+    res.status(200).json({ files: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
+// app.get("/files", async (req, res) => {
+//   try {
+//     const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE ORDER BY uploaded_at DESC");
+//     res.status(200).json({ files: result.rows });
+//   } catch (error) {
+//     console.error("Error fetching files:", error);
+//     res.status(500).json({ message: "Error fetching files" });
+//   }
+// });

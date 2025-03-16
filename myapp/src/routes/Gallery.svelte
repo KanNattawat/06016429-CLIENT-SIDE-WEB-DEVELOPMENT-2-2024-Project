@@ -183,7 +183,7 @@
         const result = await response.json();
         img = result.files.map((file) => file.filepath);
       } else {
-        alert("Failed to fetch images!");
+        alert("Failed to fetch images slide!");
       }
     } catch (error) {
       alert("Error fetching images: " + error);
