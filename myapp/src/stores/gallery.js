@@ -123,6 +123,7 @@ export async function handleDeleteImage() {
 export function openImage(url, id, name, description, category, owner_email, useremail) {
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
+    fetchComments(id);
 }
 
 export function closePreview() {
@@ -136,6 +137,7 @@ export async function fetchComments(image_id) {
     try {
         const response = await fetch(`http://localhost:3000/comments/${image_id}`);
         const data = await response.json();
+        console.log("Fetched comments:", data);
         comments.set(data.comments || []);
     } catch (error) {
         console.error("Error fetching comments:", error);
@@ -150,12 +152,21 @@ export async function handleAddComment() {
 
     if (!id || !userData || text === "") return;
 
+    console.log("Sending comment data:", {
+        image_id: id,
+        userImg: userData.picture,
+        username: userData.name || "Anonymous",
+        user_email: userData.email,
+        comment: text
+    });
+
     try {
         const response = await fetch("http://localhost:3000/comment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
             image_id: id,
+            userImg: userData.picture,
             username: userData.name || "Anonymous",
             user_email: userData.email,
             comment: text,
@@ -164,7 +175,7 @@ export async function handleAddComment() {
 
         if (response.ok) {
             const result = await response.json();
-            comments.update(current => [...current, result.comment]);
+            comments.update(current => [result.comment, ...current]);
             commentText.set("");
         } else {
             alert("Failed to add comment!");

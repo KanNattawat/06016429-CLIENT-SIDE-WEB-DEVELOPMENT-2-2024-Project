@@ -63,7 +63,7 @@ onDestroy(() => {
         {isOpen ? "✖" : "☰"}
     </button>
     
-    <a href="/" class="text-2xl font-bold p-3 hover:text-blue-400">Pesterin</a>
+    <a href="/" class="text-2xl font-bold p-3 hover:text-blue-500">Pesterin</a>
     
     <div class="hidden md:flex space-x-4">
         {#each categories as category}
@@ -75,7 +75,7 @@ onDestroy(() => {
         {#if $user}
             <button on:click={toggleDropdown} class="dropdown-btn group flex items-center space-x-2 hover:bg-gray-900 px-3 py-2 rounded-4xl">
                 <span>{$user.formatName}</span>
-                <img src={$user.picture} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 group-hover:brightness-85" />
+                <img src={$user.picture || "../../anonymous-icon.jpg"} alt="Profile" class="w-10 h-10 rounded-full border-2 border-sky-400 group-hover:border-blue-600 group-hover:brightness-85" />
             </button>
             {#if dropdown}
                 <div class="dropdown-menu absolute right-0 bg-white text-black rounded-lg shadow-md mt-2 w-40">

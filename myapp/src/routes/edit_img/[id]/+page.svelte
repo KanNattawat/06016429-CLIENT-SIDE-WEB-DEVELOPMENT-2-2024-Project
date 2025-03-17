@@ -55,9 +55,11 @@
 </script>
 
 <Navbar />
-<div class="bg-gray-900 flex justify-center items-center min-h-screen">
+<div class="bg-gray-900 flex justify-center items-center min-h-[calc(100vh-4.72rem)]">
   <div class="max-w-lg p-6 bg-white shadow-lg rounded-lg">
-    <a href="http://localhost:5173/">Back</a>
+    <a href="http://localhost:5173/">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white text-xl rounded-md px-2 py-1 mb-3 cursor-pointer">Back</button>
+    </a>
     <h1 class="text-2xl font-bold mb-4">Edit Image</h1>
 
     <label class="block text-sm font-medium">Name</label>

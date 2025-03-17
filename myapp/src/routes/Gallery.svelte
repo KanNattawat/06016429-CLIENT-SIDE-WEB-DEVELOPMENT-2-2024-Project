@@ -281,16 +281,36 @@
         </p>
 
         <hr class="my-4 border-gray-600" />
-        <p class="leading-relaxed text-xl">{$selectedImage.description}</p>
+        <p class="leading-relaxed text-md text-center p-5">{$selectedImage.description ? $selectedImage.description : "No description provided."}</p>
 
         <hr class="my-4 border-gray-600" />
         <div class="mt-5">
           <h3 class="text-3xl font-semibold">Comments</h3>
           <br />
+          {#if $user}
+          <textarea
+            class="w-full h-30 p-4 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
+            bind:value={$commentText}
+            placeholder="Add comment ..."
+          ></textarea>
+          <div class="flex justify-end mt-2 pb-8">
+            <button
+              class="mt-2 px-4 py-2 bg-blue-500 text-white rounded flex"
+              on:click={handleAddComment}>Add Comment</button
+            >
+          </div>
+        {:else}
+          <textarea
+            class="w-full h-30 p-4 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text"
+            placeholder="Please login before adding comment ..."
+            disabled
+          ></textarea>
+        {/if}
           {#each $comments as cm}
-            <p class="mt-2 text-lg">
-              ▪ <span class="ml-2">{cm.username}</span>
-              <span class="text-gray-500 ml-2 text-sm">({cm.user_email}) 
+            <p class="mt-2 text-lg flex items-center gap-x-2">
+              ▪ <img src={cm.userImg || "../../anonymous-icon.jpg"} alt={"Profile Picture"} class="w-9 h-9 rounded-full border-2 border-indigo-600">
+              <span class="font-semibold">{cm.username}</span>
+              <span class="text-gray-500 text-sm">
                 {new Date(cm.created_at).toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "2-digit",
@@ -302,27 +322,10 @@
                 })}
               </span>
             </p>
-            <p class="ml-5 text-md">{cm.comment}</p>
+            <p class="mt-3 ml-15 text-md">{cm.comment}</p>
           {/each}
           <br />
         </div>
-        {#if $user}
-          <textarea
-            class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
-            bind:value={$commentText}
-            placeholder="Add comment ..."
-          ></textarea>
-          <button
-            class="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-            on:click={handleAddComment}>Add Comment</button
-          >
-        {:else}
-          <textarea
-            class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text"
-            placeholder="Please login before adding comment ..."
-            disabled
-          ></textarea>
-        {/if}
       </div>
     </div>
   {/if}
