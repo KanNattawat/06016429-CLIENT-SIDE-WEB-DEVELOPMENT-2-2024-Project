@@ -8,6 +8,7 @@ Pesterin เป็นเว็บแอปพลิเคชันที่ถ�
 เปิด Terminal และพิมพ์คำสั่ง
 ```sh
 git clone https://github.com/KanNattawat/06016429-CLIENT-SIDE-WEB-DEVELOPMENT-2-2024-Project.git
+cd 06016429-CLIENT-SIDE-WEB-DEVELOPMENT-2-2024-Project
 ```
 
 ### 2. ติดตั้ง dependencies ของ frontend
@@ -37,6 +38,7 @@ npm install
 - ตั้งค่า Google OAuth
   - ไปที่ [Google Cloud API Credentials](https://console.cloud.google.com/apis/credentials)
   - สร้าง OAuth Client และนำ `Client ID` และ `Client Secret` มาใช้
+  - ค่าของ `Authorized redirect URIs` ให้ใส่ [](http://localhost:3000/auth/google/callback)
 - ตั้งค่า Facebook App
   - ไปที่ [Meta Developers](https://developers.facebook.com/)
   - สร้างแอปใหม่และนำ `App ID` และ `App Secret` มาใช้
