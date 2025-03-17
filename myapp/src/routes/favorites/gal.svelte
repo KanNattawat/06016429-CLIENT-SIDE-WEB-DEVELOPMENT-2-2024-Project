@@ -19,7 +19,6 @@
   let currentIndex = 0;
   let interval;
   let showSlideshow = false;
-  export let filter = "files";
 
   onMount(async () => {
     await fetchUser();

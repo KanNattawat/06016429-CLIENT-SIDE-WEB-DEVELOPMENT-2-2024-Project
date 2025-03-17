@@ -86,6 +86,7 @@ app.get("/auth/google/callback", passport.authenticate("google", { failureRedire
   let split = user.displayName.trim().split(" ");
   req.session.user = {
     picture: user.photos[0].value,
+    name: user.displayName,
     formatName: split.length > 1 ? `${split[0]} ${split[split.length - 1][0] + "."}` : user.displayName,
     email: user.emails[0].value,
   };
@@ -100,6 +101,7 @@ app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRe
     let split = user.displayName.trim().split(" ");
     req.session.user = {
       picture: user.photos[0].value,
+      name: user.displayName,
       formatName: split.length > 1 ? `${split[0]} ${split[split.length - 1][0] + "."}` : user.displayName,
       email: user.emails ? user.emails[0].value : "No email provided",
     };
@@ -191,6 +193,8 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS comments (
       id SERIAL PRIMARY KEY,
       image_id INT REFERENCES images(id) ON DELETE CASCADE,
+      username TEXT NOT NULL,
+      user_email TEXT NOT NULL,
       comment TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -328,14 +332,14 @@ app.get("/food", async (req, res) => {
 
 app.post("/comment", async (req, res) => {
   try {
-    const { image_id, comment } = req.body;
+    const { image_id, username, user_email, comment } = req.body;
     
-    if (!image_id || !comment) {
+    if (!image_id || !username || !user_email || !comment) {
       return res.status(400).json({ message: "Image ID and comment are required" });
     }
     
-    const insertQuery = "INSERT INTO comments (image_id, comment) VALUES ($1, $2) RETURNING *";
-    const result = await pool.query(insertQuery, [image_id, comment]);
+    const insertQuery = "INSERT INTO comments (image_id, username, user_email, comment) VALUES ($1, $2, $3, $4) RETURNING *";
+    const result = await pool.query(insertQuery, [image_id, username, user_email, comment]);
     
     res.status(201).json({ message: "Comment added successfully", comment: result.rows[0] });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 
@@ -52,7 +52,7 @@ export async function logout() {
         }
 
         user.set(null);
-        localStorage.removeItem('favorites');
+        // localStorage.removeItem('favorites');
         console.log("User logged out successfully");
 
         window.location.href = "http://localhost:5173";
@@ -84,6 +84,96 @@ export async function fetchImages(page) {
     }
 }
 
+export function handleEditImage() {
+    const id = get(selectedImageId);
+
+    if (id) {
+        goto(`/edit_img/${id}`);
+    }
+}
+
+export async function handleDeleteImage() {
+    const id = get(selectedImageId);
+    
+    if (!id) return;
+
+    const confirmDelete = confirm(
+        "Are you sure you want to delete this image?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+        const response = await fetch(
+            `http://localhost:3000/image/${id}`,
+            { method: "DELETE", },
+        );
+
+        if (response.ok) {
+            images.update((currentImg) => currentImg.filter((img) => img.id !== id));
+            closePreview();
+        } else {
+            alert("Failed to delete image!");
+        }
+    } catch (error) {
+        console.error("Error deleting image:", error);
+    }
+}
+
+export function openImage(url, id, name, description, category, owner_email, useremail) {
+    selectedImage.set({ url, id, name, description, category, owner_email });
+    selectedImageId.set(id);
+}
+
+export function closePreview() {
+    selectedImage.set(null);
+    selectedImageId.set(null);
+}
+
+export async function fetchComments(image_id) {
+    if (!image_id) return;
+
+    try {
+        const response = await fetch(`http://localhost:3000/comments/${image_id}`);
+        const data = await response.json();
+        comments.set(data.comments || []);
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        comments.set([]);
+    }
+}
+
+export async function handleAddComment() {
+    const id = get(selectedImageId);
+    const userData = get(user);
+    const text = get(commentText).trim();
+
+    if (!id || !userData || text === "") return;
+
+    try {
+        const response = await fetch("http://localhost:3000/comment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+            image_id: id,
+            username: userData.name || "Anonymous",
+            user_email: userData.email,
+            comment: text,
+            }),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            comments.update(current => [...current, result.comment]);
+            commentText.set("");
+        } else {
+            alert("Failed to add comment!");
+        }
+    } catch (error) {
+        console.error("Error posting comment:", error);
+    }
+}
+
 export async function fetchFavoriteImages(favorites) {
     try {
         const response = await fetch("http://localhost:3000/fav"); // ดึงภาพทั้งหมด
@@ -110,137 +200,4 @@ export async function fetchFavoriteImages(favorites) {
     } catch (error) {
         console.error("Error fetching images:", error);
     }
-}
-
-
-export function openImage(url, id, name, description, category, owner_email, useremail) {
-    selectedImage.set({ url, id, name, description, category, owner_email });
-    selectedImageId.set(id);
-}
-
-export function closePreview() {
-    selectedImage.set(null);
-    selectedImageId.set(null);
-}
-
-export async function fetchComments(image_id) {
-    try {
-        const response = await fetch(
-            `http://localhost:3000/comments/${image_id}`,
-        );
-        const data = await response.json();
-        comments.set(data.comments);
-    } catch (error) {
-        console.error("Error fetching comments:", error);
-        comments.set([]);
-    }
-}
-
-export async function handleAddComment() {
-    if (commentText.trim() === "") return;
-
-    try {
-        const response = await fetch("http://localhost:3000/comment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-            image_id: selectedImageId,
-            comment: commentText,
-            }),
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            comments.set([...comments, result.comment]);
-            commentText.set("");
-        } else {
-            alert("Failed to add comment!");
-        }
-    } catch (error) {
-        console.error("Error posting comment:", error);
-    }
-}
-
-export async function handleEditImage() {
-    if ($selectedImageId) {
-        goto(`/edit_img/${$selectedImageId}`);
-    }
-}
-
-export async function handleDeleteImage() {
-    if (!$selectedImageId) return;
-
-    const confirmDelete = confirm("Are you sure you want to delete this image?");
-    if (!confirmDelete) return;
-
-    try {
-        const response = await fetch(`http://localhost:3000/image/${$selectedImageId}`, {
-            method: "DELETE",
-        });
-
-        if (response.ok) {
-            images.update((imgs) => imgs.filter((img) => img.id !== $selectedImageId));
-            closePreview();
-        } else {
-            alert("Failed to delete image!");
-        }
-    } catch (error) {
-        console.error("Error deleting image:", error);
-    }
-}
-
-export function toggleFullscreen() {
-    const img = document.getElementById("pre_img");
-
-    if (!document.fullscreenElement) {
-        if (img.requestFullscreen) img.requestFullscreen();
-        else if (img.mozRequestFullScreen) img.mozRequestFullScreen();
-        else if (img.webkitRequestFullscreen) img.webkitRequestFullscreen();
-        else if (img.msRequestFullscreen) img.msRequestFullscreen();
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.msExitFullscreen) document.msExitFullscreen();
-    }
-}
-
-export async function fetchImage() {
-    try {
-        const response = await fetch("http://localhost:3000/files");
-        if (response.ok) {
-            const result = await response.json();
-            img.set(result.files.map((file) => file.filepath));
-        } else {
-            alert("Failed to fetch images!");
-        }
-    } catch (error) {
-        alert("Error fetching images: " + error);
-    }
-}
-
-export function nextImage() {
-    currentIndex.update((index) => (index + 1) % $img.length);
-}
-
-export function prevImage() {
-    currentIndex.update((index) => (index - 1 + $img.length) % $img.length);
-}
-
-export function startSlideshow() {
-    showSlideshow.set(true);
-    interval = setInterval(nextImage, 8000);
-    document.documentElement.requestFullscreen();
-}
-
-export function stopSlideshow() {
-    showSlideshow.set(false);
-    clearInterval(interval);
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    }
-}
-
-export function handleImageClick() {
-    stopSlideshow();
 }
