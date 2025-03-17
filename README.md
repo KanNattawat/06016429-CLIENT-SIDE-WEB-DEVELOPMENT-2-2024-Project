@@ -1,6 +1,6 @@
 # Pesterin Web Application
 
-Pesterin เป็นเว็บแอปพลิเคชันที่ถูกพัฒนาภายใต้โปรเจกต์ 06016429-CLIENT-SIDE-WEB-DEVELOPMENT-2-2024-Project
+Pesterin เป็นเว็บแอปพลิเคชันที่ถูกพัฒนาภายใต้รายวิชา 06016429-CLIENT-SIDE-WEB-DEVELOPMENT
 
 ## การติดตั้งระบบ
 
