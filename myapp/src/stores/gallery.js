@@ -124,7 +124,6 @@ export async function handleDeleteImage() {
 }
 
 export function openImage(url, id, name, description, category, owner_email) {
-    // console.log(url, id, name, description, category, owner_email);
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
     fetchComments(id);
