@@ -51,6 +51,7 @@ npm install
 
 #### รัน Frontend
 ```sh
+cd myapp
 npm run dev
 ```
 
