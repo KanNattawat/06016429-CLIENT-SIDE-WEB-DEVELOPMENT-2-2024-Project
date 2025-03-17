@@ -25,15 +25,15 @@
   <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
     
     <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Welcome to <a href="/" class="text-blue-600 hover:text-blue-800">Pesterine!</a></h2>
-      <div class="space-y-4">
+      <div class="space-y-4 flex flex-col items-center">
         <button 
-          class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg shadow-md"
+          class="flex items-center justify-center w-50 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg shadow-md"
           on:click={loginGoogle}
         >
           <FontAwesomeIcon icon={faGoogle} class="text-lg mr-3" /> Login with Google
         </button>
         <button 
-          class="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md"
+          class="flex items-center justify-center w-50 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md"
           on:click={loginFacebook}
         >
           <FontAwesomeIcon icon={faFacebook} class="text-lg mr-3" /> Login with Facebook

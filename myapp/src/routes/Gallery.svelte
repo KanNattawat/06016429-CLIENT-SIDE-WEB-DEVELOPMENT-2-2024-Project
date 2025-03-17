@@ -1,128 +1,39 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import {
-    user, images, selectedImage, selectedImageId, comments, commentText, favorites,
-    fetchUser, fetchImages, fetchComments, fetchFavorites,
-    openImage, closePreview, handleEditImage, handleDeleteImage, handleAddComment, toggleFavorite
+    user, images, selectedImage, selectedImageId,
+    comments, commentText, favorites, slide, showSlideshow, currentIndex,
+    fetchUser, fetchImages, fetchComments, fetchFavorites, fetchSlideImage,
+    openImage, closePreview, handleEditImage, handleDeleteImage,
+    handleAddComment, toggleFavorite, toggleFullscreen,
+    startSlideshow, stopSlideshow, handleSlide,
   } from "../stores/gallery";
   import { goto } from "$app/navigation";
+  import { browser } from "$app/environment";
   import { fade } from "svelte/transition";
 
-  let img = [];
-  let currentIndex = 0;
-  let interval;
-  let showSlideshow = false;
   export let filter = "files";
 
   onMount(() => {
-    fetchUser();
-    fetchImages(filter);
-    fetchComments();
-    fetchFavorites();
-    openImage();
-    closePreview();
-    handleEditImage();
-    handleDeleteImage();
-    handleAddComment();
-    toggleFavorite();
+    if (browser) {
+      fetchUser();
+      fetchImages(filter);
+      fetchComments();
+      fetchFavorites();
+      fetchSlideImage(filter);
+      window.addEventListener("keydown", handleSlide);
+    }
   });
 
-  $user && console.log("Debugging User Store:", $user.id);
-
-  function toggleFullscreen() {
-    const img = document.getElementById("pre_img");
-
-    if (!img) {
-      console.error("Image element not found!");
-      return;
+  onDestroy(() => {
+    if (browser) {
+      window.removeEventListener("keydown", handleSlide);
     }
-
-    if (!document.fullscreenElement) {
-      document
-        .getElementById("pre_img")
-        .setAttribute(
-          "class",
-          "w-fit pt-0 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]",
-        );
-      img.requestFullscreen?.() ||
-        img.mozRequestFullScreen?.() ||
-        img.webkitRequestFullscreen?.() ||
-        img.msRequestFullscreen?.();
-    } else {
-      document
-        .getElementById("pre_img")
-        .setAttribute(
-          "class",
-          "w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]",
-        );
-      document.exitFullscreen?.() ||
-        document.mozCancelFullScreen?.() ||
-        document.webkitExitFullscreen?.() ||
-        document.msExitFullscreen?.();
-    }
-  }
-
-  async function fetchImage() {
-    try {
-      const response = await fetch(`http://localhost:3000/${filter}`);
-      if (response.ok) {
-        const result = await response.json();
-        img = result.files.map((file) => file.filepath);
-      } else {
-        alert("Failed to fetch images slide!");
-      }
-    } catch (error) {
-      alert("Error fetching images: " + error);
-    }
-  }
-
-  function nextImage() {
-    currentIndex = (currentIndex + 1) % img.length;
-  }
-
-  function prevImage() {
-    currentIndex = (currentIndex - 1 + img.length) % img.length;
-  }
-
-  function startSlideshow() {
-    if (!$images || $images.length === 0) {
-      alert("No images available for slideshow.");
-      return;
-    }
-    showSlideshow = true;
-    interval = setInterval(nextImage, 6000);
-
-    const nav = document.getElementById("naver");
-    if (nav) nav.style.visibility = "hidden";
-
-    document.documentElement.requestFullscreen();
-  }
-
-  function stopSlideshow() {
-    showSlideshow = false;
-    clearInterval(interval);
-
-    const nav = document.getElementById("naver");
-    if (nav) nav.style.visibility = "visible";
-
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    }
-  }
-
-  function handleImageClick() {
-    stopSlideshow();
-  }
-
-  onMount(async () => {
-    await fetchImage();
-  });
+  })
 </script>
 
-<button
-  on:click={startSlideshow}
-  class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button
->
+<button on:click={startSlideshow} class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button>
+
 {#if $images}
   <div class="masonry p-5">
     {#each $images as img (img.id)}
@@ -140,12 +51,13 @@
             img.owner_email,
           )}
           on:keydown={(event) => { if (event.key === "Enter") 
-          openImage(img.url,
-          img.id,
-          img.name,
-          img.description,
-          img.category,
-          img.owner_email); }}
+          openImage(
+            img.url,
+            img.id,
+            img.name,
+            img.description,
+            img.category,
+            img.owner_email); }}
       >
         <img
           class="w-full h-auto rounded-lg"
@@ -273,19 +185,18 @@
     </div>
   {/if}
 
-  {#if showSlideshow}
+  {#if $showSlideshow}
     <div class="fixed inset-0 bg-black flex items-center justify-center">
-      {#if img.length > 0}
+      {#if $slide.length > 0}
       <div
       role="button"
       tabindex="0"
-      on:click={handleImageClick}
-      on:keydown={(event) => { if (event.key === "Enter") handleImageClick(); }}
-    >
+      on:click={stopSlideshow}
+      on:keydown={handleSlide}>
       <img
-        src={img[currentIndex]}
+        src={$slide[$currentIndex]}
         alt={"Slideshow image"}
-        class="max-w-full max-h-full object-contain"
+        class="h-100vh w-fit object-contain"
         transition:fade={{ duration: 500 }}
       />
     </div>

@@ -9,10 +9,9 @@ export let selectedImageId = writable(null);
 export let comments = writable([]);
 export let commentText = writable("");
 export let favorites = writable(new Set());
-export let img = writable([]);
+export let slide = writable([]);
 export let currentIndex = writable(0);
 export let showSlideshow = writable(false);
-let interval;
 
 export async function login() {
     if (browser) {
@@ -272,3 +271,100 @@ export async function toggleFavorite(imageId) {
     }
 }
 
+export function toggleFullscreen() {
+    if (!browser) return;
+
+    const slide = document.getElementById("pre_img");
+
+    if (!slide) {
+        console.error("Image element not found!");
+        return;
+    }
+
+    if (!document.fullscreenElement) {
+        document.getElementById("pre_img")
+            .setAttribute("class", "w-fit pt-0 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]");
+        slide.requestFullscreen?.() || slide.mozRequestFullScreen?.() ||
+        slide.webkitRequestFullscreen?.() || slide.msRequestFullscreen?.();
+    } else {
+        document
+            .getElementById("pre_img")
+            .setAttribute("class", "w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]");
+        document.exitFullscreen?.() || document.mozCancelFullScreen?.() ||
+        document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
+    }
+}
+
+export async function fetchSlideImage(filter = "files") {
+    try {
+        const response = await fetch(`http://localhost:3000/${filter}`);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.files && result.files.length > 0) {
+                slide.set(result.files.map((file) => file.filepath));
+            } else {
+                slide.set([])
+            }
+        } else {
+            alert("Failed to fetch images slide!");
+        }
+    } catch (error) {
+        console.error("Error fetching images: " + error);
+    }
+}
+
+export async function startSlideshow() {
+    let slideImages = get(slide);
+
+    if (!slideImages || slideImages.length === 0) {
+        alert("No images available for slideshow.");
+        return;
+    }
+
+    showSlideshow.set(true);
+
+    const nav = document.getElementById("naver");
+    if (nav) nav.style.visibility = "hidden";
+
+    document.documentElement.requestFullscreen();
+}
+
+export async function stopSlideshow() {
+    showSlideshow.set(false);
+    currentIndex.set(0);
+
+    const nav = document.getElementById("naver");
+    if (nav) nav.style.visibility = "visible";
+
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    }
+}
+
+function nextImage() {
+    slide.update((img) => {
+        if (img.length === 0) return img;
+        currentIndex.update((index) => (index + 1) % img.length);
+        return img;
+    });
+}
+
+function prevImage() {
+    slide.update((img) => {
+        if (img.length === 0) return img;
+        currentIndex.update((index) => (index - 1 + img.length) % img.length);
+        return img;
+    });
+}
+
+export async function handleSlide(event) {
+    const key = event.key.toLowerCase();
+
+    if (event.key === "arrowright" || event.key === "d" || event.key === " " || event.key === "enter") {
+        nextImage();
+    } else if (event.key === "arrowleft" || event.key === "a") {
+        prevImage();
+    } else if (event.key === "escape") {
+        stopSlideshow();
+    }
+}
