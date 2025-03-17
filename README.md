@@ -42,6 +42,7 @@ npm install
 - ตั้งค่า Facebook App
   - ไปที่ [Meta Developers](https://developers.facebook.com/)
   - สร้างแอปใหม่และนำ `App ID` และ `App Secret` มาใช้
+  
 - สร้าง `SESSION_SECRET` โดยใช้คำสั่งต่อไปนี้ใน Terminal
   ```sh
   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
