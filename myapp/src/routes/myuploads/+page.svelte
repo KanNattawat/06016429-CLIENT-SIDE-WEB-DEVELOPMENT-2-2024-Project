@@ -1,12 +1,7 @@
 <script>
-    import { onMount } from "svelte";
-    import { user, fetchUser } from "../../stores/gallery";
-    import { goto } from "$app/navigation"; // Import goto for navigation
-    import { fade, fly } from "svelte/transition"; // Import transitions
+    import { user } from "../../stores/gallery";
     import Gallery from "../Gallery.svelte";
     import Navbar from "../navbar.svelte";
-    import { fetchImages } from "../../stores/gallery";
-
 </script>
 
 <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 to-gray-800 text-white">

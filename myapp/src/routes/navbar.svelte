@@ -1,6 +1,6 @@
 <script>
     import { onDestroy, onMount } from "svelte";
-    import { user, fetchUser, login, logout, closePreview } from "../stores/gallery";
+    import { user, logout } from "../stores/gallery";
     import { get } from "svelte/store";
     import { browser } from "$app/environment";
     import { goto } from "$app/navigation";
@@ -18,7 +18,6 @@
     let dropdown = false;
 
     const tabs = [
-        // { name: "Favorites", href: "/favorites" },
         { name: "Uploads", href: "/upload" },
     ];
 

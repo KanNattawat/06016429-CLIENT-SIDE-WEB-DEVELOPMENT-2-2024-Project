@@ -1,10 +1,17 @@
 <script>
   import { onMount } from "svelte";
-  import { user, images, selectedImage, selectedImageId,
-          fetchUser, fetchImages,
-          openImage, closePreview } from "../stores/gallery";
-  import { goto } from "$app/navigation"; // Import goto for navigation
-  import { fade, fly } from "svelte/transition"; // Import transitions
+  import {
+    user,
+    images,
+    selectedImage,
+    selectedImageId,
+    fetchUser,
+    fetchImages,
+    openImage,
+    closePreview,
+  } from "../stores/gallery";
+  import { goto } from "$app/navigation";
+  import { fade } from "svelte/transition";
 
   let comments = [];
   let commentText = "";
@@ -14,7 +21,6 @@
   let showSlideshow = false;
   export let filter = "files";
 
-  // Fetch data
   onMount(() => {
     fetchUser();
     fetchFavorites();
@@ -27,59 +33,60 @@
   let favorites = new Set();
 
   async function toggleFavorite(imageId) {
-      if (!user) return alert("Please log in to favorite images!");
-  
-      const isFavorite = favorites.has(imageId);
-      const method = isFavorite ? "DELETE" : "POST";
-      
-      try {
-        await fetch("http://localhost:3000/favorite", {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
-        });
-  
-        // **Create a new Set to trigger reactivity**
-        favorites = new Set(favorites);
-  
-        if (isFavorite) {
-          favorites.delete(imageId);
-        } else {
-          favorites.add(imageId);
-        }
-  
-        // Save the updated favorites to localStorage
-        localStorage.setItem('favorites', JSON.stringify([...favorites]));
-      } catch (error) {
-        console.error("Error toggling favorite:", error);
+    if (!user) return alert("Please log in to favorite images!");
+
+    const isFavorite = favorites.has(imageId);
+    const method = isFavorite ? "DELETE" : "POST";
+
+    try {
+      await fetch("http://localhost:3000/favorite", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
+      });
+
+      favorites = new Set(favorites);
+
+      if (isFavorite) {
+        favorites.delete(imageId);
+      } else {
+        favorites.add(imageId);
       }
+
+      localStorage.setItem("favorites", JSON.stringify([...favorites]));
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
     }
-  
+  }
+
   async function fetchFavorites() {
-  if (!user) return;
+    if (!user) return;
 
-  // โหลดค่าจาก localStorage
-  const storedFavorites = localStorage.getItem('favorites');
-  if (storedFavorites) {
-    favorites = new Set(JSON.parse(storedFavorites));
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/favorites/${encodeURIComponent($user.email)}`);
-    const data = await response.json();
-
-    if (data.favorites && Array.isArray(data.favorites)) {
-      favorites = new Set(data.favorites.map(fav => fav.image_id || fav.id));
-    } else {
-      console.error("Invalid favorites response:", data);
+    // โหลดค่าจาก localStorage
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      favorites = new Set(JSON.parse(storedFavorites));
     }
 
-    console.log("Updated favorites:", favorites);
-  } catch (error) {
-    console.error("Error fetching favorites:", error);
-  }
-}
+    try {
+      const response = await fetch(
+        `http://localhost:3000/favorites/${encodeURIComponent($user.email)}`,
+      );
+      const data = await response.json();
 
+      if (data.favorites && Array.isArray(data.favorites)) {
+        favorites = new Set(
+          data.favorites.map((fav) => fav.image_id || fav.id),
+        );
+      } else {
+        console.error("Invalid favorites response:", data);
+      }
+
+      console.log("Updated favorites:", favorites);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
+  }
 
   $user && console.log("Debugging User Store:", $user.id);
 
@@ -150,33 +157,42 @@
 
   function handleEditImage() {
     if ($selectedImageId) {
-      goto(`/edit_img/${$selectedImageId}`); // Navigate to the edit page
+      goto(`/edit_img/${$selectedImageId}`);
     }
   }
 
   function toggleFullscreen() {
-  const img = document.getElementById("pre_img");
+    const img = document.getElementById("pre_img");
 
-  if (!img) {
-    console.error("Image element not found!");
-    return;
+    if (!img) {
+      console.error("Image element not found!");
+      return;
+    }
+
+    if (!document.fullscreenElement) {
+      document
+        .getElementById("pre_img")
+        .setAttribute(
+          "class",
+          "w-fit pt-0 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]",
+        );
+      img.requestFullscreen?.() ||
+        img.mozRequestFullScreen?.() ||
+        img.webkitRequestFullscreen?.() ||
+        img.msRequestFullscreen?.();
+    } else {
+      document
+        .getElementById("pre_img")
+        .setAttribute(
+          "class",
+          "w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]",
+        );
+      document.exitFullscreen?.() ||
+        document.mozCancelFullScreen?.() ||
+        document.webkitExitFullscreen?.() ||
+        document.msExitFullscreen?.();
+    }
   }
-
-  if (!document.fullscreenElement) {
-    document.getElementById("pre_img").setAttribute("class", "w-fit pt-0 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]");
-    img.requestFullscreen?.() ||
-    img.mozRequestFullScreen?.() ||
-    img.webkitRequestFullscreen?.() ||
-    img.msRequestFullscreen?.();
-  } else {
-    document.getElementById("pre_img").setAttribute("class", "w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]");
-    document.exitFullscreen?.() ||
-    document.mozCancelFullScreen?.() ||
-    document.webkitExitFullscreen?.() ||
-    document.msExitFullscreen?.();
-  }
-}
-
 
   async function fetchImage() {
     try {
@@ -201,21 +217,23 @@
   }
 
   function startSlideshow() {
-  showSlideshow = true;
-  interval = setInterval(nextImage, 6000);
+    if (!$images || $images.length === 0) {
+      alert("No images available for slideshow.");
+      return;
+    }
+    showSlideshow = true;
+    interval = setInterval(nextImage, 6000);
 
-  // Hide the navbar
-  const nav = document.getElementById("naver");
-  if (nav) nav.style.visibility = "hidden";
+    const nav = document.getElementById("naver");
+    if (nav) nav.style.visibility = "hidden";
 
-  document.documentElement.requestFullscreen();
+    document.documentElement.requestFullscreen();
   }
 
   function stopSlideshow() {
     showSlideshow = false;
     clearInterval(interval);
 
-    // Show the navbar when exiting slideshow
     const nav = document.getElementById("naver");
     if (nav) nav.style.visibility = "visible";
 
@@ -224,7 +242,6 @@
     }
   }
 
-
   function handleImageClick() {
     stopSlideshow();
   }
@@ -232,7 +249,6 @@
   onMount(async () => {
     await fetchImage();
   });
-
 </script>
 
 <button
@@ -240,21 +256,28 @@
   class="bg-gray-700 text-white px-4 py-2 rounded">Fullscreen Slideshow</button
 >
 {#if $images}
-<div class="masonry p-5">
-  {#each $images as img (img.id)}
-    <div
-      class="cursor-pointer transition-transform transform hover:scale-105"
-      on:click={() =>
-        openImage(img.url, img.id, img.name, img.description, img.category, img.owner_email)}
-    >
-      <img
-        class="w-full h-auto rounded-lg"
-        src={img.url}
-        alt="Uploaded image"
-      />
-    </div>
-  {/each}
-</div>
+  <div class="masonry p-5">
+    {#each $images as img (img.id)}
+      <div
+        class="cursor-pointer transition-transform transform hover:scale-105"
+        on:click={() =>
+          openImage(
+            img.url,
+            img.id,
+            img.name,
+            img.description,
+            img.category,
+            img.owner_email,
+          )}
+      >
+        <img
+          class="w-full h-auto rounded-lg"
+          src={img.url}
+          alt="Uploaded image"
+        />
+      </div>
+    {/each}
+  </div>
 
   {#if $selectedImage}
     <div
@@ -263,7 +286,8 @@
     >
       <button
         class="absolute top-25 left-10 bg-blue-600 hover:bg-blue-700 text-white text-xl rounded-2xl cursor-pointer mx-15 my-5 px-3 py-1"
-        on:click={closePreview}>Close
+        on:click={closePreview}
+        >Close
       </button>
 
       <img
@@ -288,7 +312,6 @@
         </a>
 
         {#if $user && $user.email === $selectedImage.owner_email}
-          <!-- Check ownership -->
           <button
             class="absolute right-81 bg-yellow-700 h-10 w-30 rounded-lg hover:bg-yellow-800"
             on:click={handleEditImage}
@@ -303,7 +326,6 @@
           </button>
         {/if}
 
-        <!-- Move Favorite button below Download button -->
         <button
           class="absolute right-15 bg-gray-800 rounded-lg hover:bg-gray-900 mt-16"
           on:click|stopPropagation={() => toggleFavorite($selectedImageId)}
@@ -330,7 +352,9 @@
             <p class="mt-2 text-xl">
               ▪ {comment.comment}
               <span class="text-gray-500 ml-2"
-                >{new Date(comment.created_at).toLocaleDateString("en-CA")}</span
+                >{new Date(comment.created_at).toLocaleDateString(
+                  "en-CA",
+                )}</span
               >
             </p>
           {/each}

@@ -6,7 +6,7 @@
   import { user, fetchUser } from "../../../stores/gallery";
 
   let id;
-  $: id = $page.params.id; // Reactive assignment
+  $: id = $page.params.id;
 
   let name = "";
   let description = "";
@@ -19,7 +19,6 @@
         { name: "Architecture" },
         { name: "Food" }
     ];
-  // Fetch Image Details
   async function fetchImage() {
     const res = await fetch(`http://localhost:3000/myuploads/${encodeURIComponent($user.email)}`);
     const data = await res.json();
@@ -33,15 +32,12 @@
     }
   }
 
-  //
-
   onMount(() => {
     fetchUser();
     fetchImage();
     fetchCategories();
   });
 
-  // Update Image
   async function updateImage() {
     const res = await fetch(`http://localhost:3000/image/${id}`, {
       method: "PUT",
@@ -51,7 +47,7 @@
 
     if (res.ok) {
       alert("Image updated successfully!");
-      goto("/"); // Redirect to homepage
+      goto("/");
     } else {
       alert("Failed to update image.");
     }
@@ -59,8 +55,6 @@
 </script>
 
 <Navbar />
-<!-- Edit Image Form -->
-<!-- Edit Image Form -->
 <div class="bg-gray-900 flex justify-center items-center min-h-screen">
   <div class="max-w-lg p-6 bg-white shadow-lg rounded-lg">
     <a href="http://localhost:5173/">Back</a>

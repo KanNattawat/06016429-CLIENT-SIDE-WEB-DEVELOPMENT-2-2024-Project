@@ -9,7 +9,6 @@ const fs = require("fs");
 const cors = require("cors");
 const pg = require("pg");
 const dotenv = require("dotenv");
-const router = express.Router();
 
 dotenv.config();
 
@@ -168,23 +167,15 @@ async function initializeDatabase() {
       id SERIAL PRIMARY KEY,
       filename TEXT NOT NULL,
       filepath TEXT NOT NULL,
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       name TEXT,
       description TEXT,
       category TEXT,
-      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       owner_email TEXT,
-      visibility TEXT DEFAULT TRUE
+      visibility BOOLEAN DEFAULT TRUE
     );
   `;
   await pool.query(createImagesTableQuery);
-
-  const createCategoriesTableQuery = `
-    CREATE TABLE IF NOT EXISTS categories (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE
-    );
-  `;
-  await pool.query(createCategoriesTableQuery);
 
   const createFavTableQuery = `
   CREATE TABLE IF NOT EXISTS favorites (
@@ -208,37 +199,6 @@ async function initializeDatabase() {
 }
 initializeDatabase();
 
-// API endpoint to create a category
-// app.post("/category", async (req, res) => {
-//   try {
-//     const { name } = req.body;
-
-//     if (!name) {
-//       return res.status(400).json({ message: "Category name is required" });
-//     }
-
-//     const insertQuery = "INSERT INTO categories (name) VALUES ($1) RETURNING *";
-//     const result = await pool.query(insertQuery, [name]);
-
-//     res.status(201).json({ message: "Category created successfully", category: result.rows[0] });
-//   } catch (error) {
-//     console.error("Error creating category:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// });
-
-// API endpoint to get all categories
-app.get("/categories", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM categories ORDER BY name");
-    res.status(200).json({ categories: result.rows });
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    res.status(500).json({ message: "Error fetching categories" });
-  }
-});
-
-// API endpoint to upload images with categories
 app.post(
   "/upload",
   upload.fields([{ name: "images", maxCount: 10 }, { name: "filename" }, { name: "description" }, { name: "category" }, { name: "owner_email"}, { name: "visibility"}]),
@@ -299,52 +259,6 @@ app.post(
   }
 );
 
-// API endpoint to update image category
-app.put("/image/:id/category", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { category_id } = req.body;
-
-    if (!category_id) {
-      return res.status(400).json({ message: "Category ID is required" });
-    }
-
-    // Check if the category exists
-    const categoryResult = await pool.query("SELECT * FROM categories WHERE id = $1", [category_id]);
-    if (categoryResult.rows.length === 0) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-
-    // Update the image's category
-    const updateQuery = "UPDATE images SET category_id = $1 WHERE id = $2 RETURNING *";
-    const result = await pool.query(updateQuery, [category_id, id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Image not found" });
-    }
-
-    res.status(200).json({ message: "Image category updated successfully", image: result.rows[0] });
-  } catch (error) {
-    console.error("Error updating image category:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-// API endpoint to get images by category
-app.get("/images/category/:category_id", async (req, res) => {
-  try {
-    const { category_id } = req.params;
-    
-    const result = await pool.query("SELECT * FROM images WHERE category_id = $1 ORDER BY uploaded_at DESC", [category_id]);
-    
-    res.status(200).json({ images: result.rows });
-  } catch (error) {
-    console.error("Error fetching images by category:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-// API endpoint to get all images
 app.get("/files", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE ORDER BY uploaded_at DESC");
@@ -355,7 +269,6 @@ app.get("/files", async (req, res) => {
   }
 });
 
-// API endpoint to get images in the "Nature" category
 app.get("/nature", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE AND category = 'Nature' ORDER BY uploaded_at DESC");
@@ -413,9 +326,6 @@ app.get("/food", async (req, res) => {
   }
 });
 
-
-
-// API endpoint to add a comment to an image
 app.post("/comment", async (req, res) => {
   try {
     const { image_id, comment } = req.body;
@@ -434,7 +344,6 @@ app.post("/comment", async (req, res) => {
   }
 });
 
-// API endpoint to get comments for a specific image
 app.get("/comments/:image_id", async (req, res) => {
   try {
     const { image_id } = req.params;
@@ -448,7 +357,6 @@ app.get("/comments/:image_id", async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
@@ -564,13 +472,3 @@ app.get("/myuploads/:email", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// app.get("/files", async (req, res) => {
-//   try {
-//     const result = await pool.query("SELECT * FROM images WHERE visibility = TRUE ORDER BY uploaded_at DESC");
-//     res.status(200).json({ files: result.rows });
-//   } catch (error) {
-//     console.error("Error fetching files:", error);
-//     res.status(500).json({ message: "Error fetching files" });
-//   }
-// });

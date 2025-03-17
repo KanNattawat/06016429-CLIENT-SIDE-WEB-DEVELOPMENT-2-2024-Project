@@ -9,10 +9,6 @@
     let category = "";
     let visibility = true;
     let dragging = false;
-    let vis = true;
-    let pos = 0;
-    let swipe = false;
-    let buttonWidth = 0;
 
     let categories = [
         { id: 1, name: "Nature" },
@@ -24,91 +20,45 @@
 
     onMount(() => {
         fetchUser();
-        buttonWidth =
-            document.querySelector(".swipe-container")?.offsetWidth || 100;
     });
 
-    function toggleVisibility() {
-        vis = !vis;
-        pos = vis ? buttonWidth - 40 : 0;
-        console.log(vis);
-    }
-
-    function startSwiping(event) {
-        swipe = true;
-    }
-
-    function onSwiping(event) {
-        if (!swipe) return;
-        let clientX = event.touches ? event.touches[0].clientX : event.clientX;
-        let newPos = Math.min(Msth.max(clientX - 20, 0), buttonWidth - 40);
-        pos = newPos;
-    }
-
-    function endSwiping() {
-        swipe = false;
-        vis = pos > buttonWidth / 2;
-        pos = vis ? buttonWidth - 40 : 0;
-    }
-
     async function handleUpload(event) {
-        event.preventDefault();
+    event.preventDefault();
 
-        if (!$user) {
-            alert("User not authenticated. Please log in.");
-            return;
-        }
+    if (!$user) return alert("User not authenticated. Please log in.");
+    if (files.length === 0) return alert("Please select files to upload.");
+    if (!category) return alert("Please select a category.");
+    if (files.length === 1 && !name.trim()) return alert("Please enter a name for the file.");
 
-        if (files.length === 0) {
-            alert("Please select files to upload.");
-            return;
-        }
+    const formData = new FormData();
 
-        const formData = new FormData();
+    files.forEach((file, index) => {
+        formData.append("images", file);
+        formData.append(`owner_email[${index}]`, $user.email);
+        formData.append(`category[${index}]`, category);
+        formData.append(`filename[${index}]`, name);
+        formData.append(`visibility[${index}]`, visibility);
+    });
 
-        files.forEach((file, index) => {
-            formData.append(`images`, file);
-            formData.append(`owner_email[${index}]`, $user.email); // Append for each file
-            formData.append(`category[${index}]`, category); // Append for each file
-            formData.append(`filename[${index}]`, name); // Append for each file
-            formData.append(`visibility[${index}]`, visibility); // Append for each file
-            // formData.append(`category[${index}]`, category); // Append for each file
-        });
+    formData.append("filename", name);
+    formData.append("description", description);
+    formData.append("category", category);
+    formData.append("owner_email", $user.email);
+    formData.append("visibility", visibility);
 
-        if (files.length === 1 && name.trim() === "") {
-            alert("Please enter a name for the file.");
-            return;
-        }
+    try {
+        const response = await fetch("http://localhost:3000/upload", { method: "POST", body: formData });
 
-        formData.append("filename", name);
-        formData.append("description", description);
+        if (!response.ok) throw new Error("Upload failed. Please try again.");
 
-        if (!category) {
-            alert("Please select a category.");
-            return;
-        }
+        alert("Upload Success!");
+        Object.assign(this, { files: [], name: "", description: "", category: "", visibility: true });
+        window.location.href = "http://localhost:5173/";
 
-        formData.append("category", category);
-        formData.append("owner_email", $user.email);
-        formData.append("visibility", visibility);
-
-        const response = await fetch("http://localhost:3000/upload", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (response.ok) {
-            alert("Upload Success!");
-            files = [];
-            name = "";
-            description = "";
-            category = "";
-            visibility = true;
-            window.location.href = "http://localhost:5173/";
-        } else {
-            alert("Upload failed. Please try again.");
-        }
+    } catch (error) {
+        alert(error.message);
     }
+}
 
     function handleClick(event) {
         let fileInput = document.getElementById("fileInput");

@@ -86,11 +86,9 @@ export async function fetchImages(page) {
 
 export async function fetchFavoriteImages(favorites) {
     try {
-        // images = writable([]);
         const response = await fetch("http://localhost:3000/files"); // ดึงภาพทั้งหมด
         if (response.ok) {
             const result = await response.json();
-            // Check if favorites is an array and filter based on its contents
             if (!Array.isArray(favorites)) {
                 images.set(result.files
                     .filter(file => favorites.has(file.id)) // กรองเฉพาะภาพที่ถูกใจ
@@ -119,7 +117,6 @@ export function openImage(url, id, name, description, category, owner_email) {
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
     console.log(id, selectedImageId);
-    // fetchComments(selectedImageId);
 }
 
 export function closePreview() {
