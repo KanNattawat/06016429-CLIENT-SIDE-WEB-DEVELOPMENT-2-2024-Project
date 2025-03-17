@@ -38,7 +38,7 @@ npm install
 - ตั้งค่า Google OAuth
   - ไปที่ [Google Cloud API Credentials](https://console.cloud.google.com/apis/credentials)
   - สร้าง OAuth Client และนำ `Client ID` และ `Client Secret` มาใช้
-  - ค่าของ `Authorized redirect URIs` ให้ใส่ [http://localhost:3000/auth/google/callback](http://localhost:3000/auth/google/callback)
+  - ค่าของ `Authorized redirect URIs` ให้ใส่ `http://localhost:3000/auth/google/callback`
 - ตั้งค่า Facebook App
   - ไปที่ [Meta Developers](https://developers.facebook.com/)
   - สร้างแอปใหม่และนำ `App ID` และ `App Secret` มาใช้
