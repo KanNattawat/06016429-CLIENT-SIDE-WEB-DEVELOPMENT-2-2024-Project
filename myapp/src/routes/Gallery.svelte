@@ -1,20 +1,13 @@
 <script>
   import { onMount } from "svelte";
   import {
-    user,
-    images,
-    selectedImage,
-    selectedImageId,
-    fetchUser,
-    fetchImages,
-    openImage,
-    closePreview,
+    user, images, selectedImage, selectedImageId, comments, commentText,
+    fetchUser, fetchImages, fetchComments,
+    openImage, closePreview, handleEditImage, handleDeleteImage, handleAddComment
   } from "../stores/gallery";
   import { goto } from "$app/navigation";
   import { fade } from "svelte/transition";
 
-  let comments = [];
-  let commentText = "";
   let img = [];
   let currentIndex = 0;
   let interval;
@@ -23,10 +16,14 @@
 
   onMount(() => {
     fetchUser();
-    fetchFavorites();
     fetchImages(filter);
+    fetchComments();
+    fetchFavorites();
     openImage();
     closePreview();
+    handleEditImage();
+    handleDeleteImage();
+    handleAddComment();
   });
 
   // FAV
@@ -60,7 +57,7 @@
   }
 
   async function fetchFavorites() {
-    if (!user) return;
+    if (!$user) return;
 
     // โหลดค่าจาก localStorage
     const storedFavorites = localStorage.getItem("favorites");
@@ -89,77 +86,6 @@
   }
 
   $user && console.log("Debugging User Store:", $user.id);
-
-  async function fetchComments(image_id) {
-    try {
-      const response = await fetch(
-        `http://localhost:3000/comments/${image_id}`,
-      );
-      const data = await response.json();
-      comments = data.comments;
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      comments = [];
-    }
-  }
-
-  async function handleAddComment() {
-    if (commentText.trim() === "") return;
-
-    try {
-      const response = await fetch("http://localhost:3000/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_id: $selectedImageId,
-          comment: commentText,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        comments = [...comments, result.comment];
-        commentText = "";
-      } else {
-        alert("Failed to add comment!");
-      }
-    } catch (error) {
-      console.error("Error posting comment:", error);
-    }
-  }
-
-  async function handleDeleteImage() {
-    if (!$selectedImageId) return;
-
-    const confirmDelete = confirm(
-      "Are you sure you want to delete this image?",
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const response = await fetch(
-        `http://localhost:3000/image/${$selectedImageId}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      if (response.ok) {
-        $images = $images.filter((img) => img.id !== $selectedImageId);
-        closePreview();
-      } else {
-        alert("Failed to delete image!");
-      }
-    } catch (error) {
-      console.error("Error deleting image:", error);
-    }
-  }
-
-  function handleEditImage() {
-    if ($selectedImageId) {
-      goto(`/edit_img/${$selectedImageId}`);
-    }
-  }
 
   function toggleFullscreen() {
     const img = document.getElementById("pre_img");
@@ -260,6 +186,8 @@
     {#each $images as img (img.id)}
       <div
         class="cursor-pointer transition-transform transform hover:scale-105"
+        role="button"
+        tabindex="0"
         on:click={() =>
           openImage(
             img.url,
@@ -269,11 +197,18 @@
             img.category,
             img.owner_email,
           )}
+          on:keydown={(event) => { if (event.key === "Enter") 
+          openImage(img.url,
+          img.id,
+          img.name,
+          img.description,
+          img.category,
+          img.owner_email); }}
       >
         <img
           class="w-full h-auto rounded-lg"
           src={img.url}
-          alt="Uploaded image"
+          alt={"Uploaded image"}
         />
       </div>
     {/each}
@@ -290,13 +225,17 @@
         >Close
       </button>
 
-      <img
-        class="w-fit pt-18 pt-0 mt-4 cursor-pointer pt-0 h-[calc(75vh)]"
-        src={$selectedImage.url}
-        alt="Preview"
-        id="pre_img"
+      <div
+        class="pt-18 cursor-pointer"
+        role="button"
+        tabindex="0"
         on:click={() => toggleFullscreen()}
-      />
+        on:keydown={(event) => { if (event.key === "Enter") toggleFullscreen(); }}>
+          <img src={$selectedImage.url}
+          class="h-[calc(75vh)] w-fit mt-4"
+          alt="Preview"
+          id="pre_img" />
+      </div>
 
       <div
         class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg w-full px-25 py-10 mt-0"
@@ -348,22 +287,29 @@
         <div class="mt-5">
           <h3 class="text-3xl font-semibold">Comments</h3>
           <br />
-          {#each comments as comment}
-            <p class="mt-2 text-xl">
-              ▪ {comment.comment}
-              <span class="text-gray-500 ml-2"
-                >{new Date(comment.created_at).toLocaleDateString(
-                  "en-CA",
-                )}</span
-              >
+          {#each $comments as cm}
+            <p class="mt-2 text-lg">
+              ▪ <span class="ml-2">{cm.username}</span>
+              <span class="text-gray-500 ml-2 text-sm">({cm.user_email}) 
+                {new Date(cm.created_at).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }) + " " + new Date(cm.created_at).toLocaleTimeString("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </span>
             </p>
+            <p class="ml-5 text-md">{cm.comment}</p>
           {/each}
           <br />
         </div>
         {#if $user}
           <textarea
             class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
-            bind:value={commentText}
+            bind:value={$commentText}
             placeholder="Add comment ..."
           ></textarea>
           <button
@@ -384,13 +330,19 @@
   {#if showSlideshow}
     <div class="fixed inset-0 bg-black flex items-center justify-center">
       {#if img.length > 0}
-        <img
-          src={img[currentIndex]}
-          alt="Slideshow image"
-          class="max-w-full max-h-full object-contain"
-          on:click={handleImageClick}
-          transition:fade={{ duration: 500 }}
-        />
+      <div
+      role="button"
+      tabindex="0"
+      on:click={handleImageClick}
+      on:keydown={(event) => { if (event.key === "Enter") handleImageClick(); }}
+    >
+      <img
+        src={img[currentIndex]}
+        alt={"Slideshow image"}
+        class="max-w-full max-h-full object-contain"
+        transition:fade={{ duration: 500 }}
+      />
+    </div>
       {:else}
         <p class="text-white">Loading images...</p>
       {/if}
