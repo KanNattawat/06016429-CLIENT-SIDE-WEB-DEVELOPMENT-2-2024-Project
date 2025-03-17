@@ -15,12 +15,13 @@
   export let filter = "files";
 
   // Fetch data
-  onMount(() => {
-    fetchUser();
-    fetchFavorites();
-    fetchFavoriteImages(favorites);
-    openImage();
-    closePreview();
+  onMount(async () => {
+    await fetchUser();
+    await fetchFavorites();
+    // toggleFavorite(0);
+    await fetchFavoriteImages(favorites);
+    await openImage();
+    await closePreview();
   });
 
   // FAV
@@ -33,7 +34,7 @@
       const method = isFavorite ? "DELETE" : "POST";
       
       try {
-        await fetch("http://localhost:3000/favorite", {
+        await fetch(`http://localhost:3000/favorites/${encodeURIComponent($user.email)}`, {
           method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
@@ -58,6 +59,8 @@
   async function fetchFavorites() {
   if (!user) return;
 
+  favorites = new Set();
+
   // โหลดค่าจาก localStorage
   const storedFavorites = localStorage.getItem('favorites');
   if (storedFavorites) {
@@ -75,9 +78,11 @@
     }
 
     console.log("Updated favorites:", favorites);
+    localStorage.setItem('favorites', JSON.stringify([...favorites]));
   } catch (error) {
     console.error("Error fetching favorites:", error);
   }
+  console.log(favorites);
 }
 
 

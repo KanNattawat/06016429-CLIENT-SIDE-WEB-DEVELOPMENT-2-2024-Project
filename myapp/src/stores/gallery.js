@@ -52,6 +52,7 @@ export async function logout() {
         }
 
         user.set(null);
+        localStorage.removeItem('favorites');
         console.log("User logged out successfully");
 
         window.location.href = "http://localhost:5173";
@@ -85,6 +86,7 @@ export async function fetchImages(page) {
 
 export async function fetchFavoriteImages(favorites) {
     try {
+        // images = writable([]);
         const response = await fetch("http://localhost:3000/files"); // ดึงภาพทั้งหมด
         if (response.ok) {
             const result = await response.json();
@@ -100,6 +102,7 @@ export async function fetchFavoriteImages(favorites) {
                         category: file.category || "Uncategorized",
                         visibility: file.visibility,
                     })));
+                    console.log(images);
             } else {
                 console.error("Favorites must be an array!");
             }
