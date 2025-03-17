@@ -365,7 +365,7 @@ app.delete("/image/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get the image details from the database
+
     const result = await pool.query("SELECT * FROM images WHERE id = $1", [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Image not found" });
@@ -374,12 +374,12 @@ app.delete("/image/:id", async (req, res) => {
     const image = result.rows[0];
     const filePath = path.join(__dirname, "../myapp/static", image.filepath);
 
-    // Delete the file from the filesystem
+
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
 
-    // Delete the image record from the database
+
     await pool.query("DELETE FROM images WHERE id = $1", [id]);
 
     res.status(200).json({ message: "Image deleted successfully" });
@@ -394,13 +394,13 @@ app.put("/image/:id", async (req, res) => {
     const { id } = req.params;
     const { name, description, category, visibility } = req.body;
 
-    // Check if the image exists
+
     const imageResult = await pool.query("SELECT * FROM images WHERE id = $1", [id]);
     if (imageResult.rows.length === 0) {
       return res.status(404).json({ message: "Image not found" });
     }
 
-    // Update query
+
     const updateQuery = `
       UPDATE images 
       SET name = $1, description = $2, category = $3, visibility = $4
@@ -417,7 +417,7 @@ app.put("/image/:id", async (req, res) => {
   }
 });
 
-// Add a favorite
+
 app.post("/favorite", async (req, res) => {
   try {
     const { user_email, image_id } = req.body;
@@ -431,7 +431,7 @@ app.post("/favorite", async (req, res) => {
   }
 });
 
-// Remove a favorite
+
 app.delete("/favorite", async (req, res) => {
   try {
     const { user_email, image_id } = req.body;
@@ -445,7 +445,7 @@ app.delete("/favorite", async (req, res) => {
   }
 });
 
-// Get user's favorite images
+
 app.get("/favorites/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -459,7 +459,7 @@ app.get("/favorites/:email", async (req, res) => {
   }
 });
 
-// Get user's favorite images
+
 app.get("/myuploads/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -470,5 +470,15 @@ app.get("/myuploads/:email", async (req, res) => {
     res.status(200).json({ files: result.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/fav", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM images ORDER BY uploaded_at DESC");
+    res.status(200).json({ files: result.rows });
+  } catch (error) {
+    console.error("Error fetching files:", error);
+    res.status(500).json({ message: "Error fetching files" });
   }
 });

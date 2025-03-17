@@ -86,7 +86,7 @@ export async function fetchImages(page) {
 
 export async function fetchFavoriteImages(favorites) {
     try {
-        const response = await fetch("http://localhost:3000/files"); // ดึงภาพทั้งหมด
+        const response = await fetch("http://localhost:3000/fav"); // ดึงภาพทั้งหมด
         if (response.ok) {
             const result = await response.json();
             if (!Array.isArray(favorites)) {
@@ -98,9 +98,9 @@ export async function fetchFavoriteImages(favorites) {
                         name: file.name,
                         description: file.description,
                         category: file.category || "Uncategorized",
+                        owner_email: file.owner_email || "Anonymous",
                         visibility: file.visibility,
                     })));
-                    console.log(images);
             } else {
                 console.error("Favorites must be an array!");
             }
@@ -113,10 +113,9 @@ export async function fetchFavoriteImages(favorites) {
 }
 
 
-export function openImage(url, id, name, description, category, owner_email) {
+export function openImage(url, id, name, description, category, owner_email, useremail) {
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
-    console.log(id, selectedImageId);
 }
 
 export function closePreview() {

@@ -88,7 +88,6 @@
     } catch (error) {
       console.error("Error fetching favorites:", error);
     }
-    console.log(favorites);
   }
 
   $user && console.log("Debugging User Store:", $user.id);
@@ -271,6 +270,7 @@
             img.description,
             img.category,
             img.owner_email,
+            $user.email
           )}
       >
         <img
