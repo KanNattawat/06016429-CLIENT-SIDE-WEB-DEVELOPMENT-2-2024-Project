@@ -8,6 +8,7 @@ export let selectedImage = writable(null);
 export let selectedImageId = writable(null);
 export let comments = writable([]);
 export let commentText = writable("");
+export let favorites = writable(new Set());
 export let img = writable([]);
 export let currentIndex = writable(0);
 export let showSlideshow = writable(false);
@@ -25,8 +26,8 @@ export async function login() {
 export async function fetchUser() {
     try {
         const response = await fetch("http://localhost:3000/auth/user", {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
         });
         if (!response.ok) {
             user.set(null);
@@ -35,9 +36,10 @@ export async function fetchUser() {
         const data = await response.json();
         if (data.user) {
             user.set(data.user);
+            fetchFavorite();
         }
     } catch {
-        alert("User not authorized");
+        console.error("User not authorized");
     }
 }
 
@@ -52,7 +54,8 @@ export async function logout() {
         }
 
         user.set(null);
-        // localStorage.removeItem('favorites');
+        favorites.set(new Set());
+        localStorage.removeItem("favorites");
         console.log("User logged out successfully");
 
         window.location.href = "http://localhost:5173";
@@ -77,10 +80,10 @@ export async function fetchImages(page) {
                 visibility: file.visibility,
             })));
         } else {
-            alert("Failed to fetch images!");
+            console.error("Failed to fetch images!");
         }
     } catch (error) {
-        alert("Error fetching images: " + error);
+        console.error("Error fetching images: " + error);
     }
 }
 
@@ -123,6 +126,7 @@ export async function handleDeleteImage() {
 export function openImage(url, id, name, description, category, owner_email, useremail) {
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
+    fetchComments(id);
 }
 
 export function closePreview() {
@@ -150,12 +154,21 @@ export async function handleAddComment() {
 
     if (!id || !userData || text === "") return;
 
+    console.log("Sending comment data:", {
+        image_id: id,
+        userImg: userData.picture,
+        username: userData.name || "Anonymous",
+        user_email: userData.email,
+        comment: text
+    });
+
     try {
         const response = await fetch("http://localhost:3000/comment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
             image_id: id,
+            userImg: userData.picture,
             username: userData.name || "Anonymous",
             user_email: userData.email,
             comment: text,
@@ -164,13 +177,40 @@ export async function handleAddComment() {
 
         if (response.ok) {
             const result = await response.json();
-            comments.update(current => [...current, result.comment]);
+            comments.update(current => [result.comment, ...current]);
             commentText.set("");
         } else {
             alert("Failed to add comment!");
         }
     } catch (error) {
         console.error("Error posting comment:", error);
+    }
+}
+
+export async function fetchFavorites() {
+    const userData = get(user);
+
+    if (!userData) return;
+
+    // load localStorage
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+        favorites = new Set(JSON.parse(storedFavorites));
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/favorites/${encodeURIComponent(userData.email)}`);
+        const data = await response.json();
+
+        if (data.favorites && Array.isArray(data.favorites)) {
+            favorites.set(new Set(data.favorites.map((fav) => fav.image_id || fav.id)));
+        } else {
+            console.error("Invalid favorites response:", data);
+        }
+
+        console.log("Updated favorites:", favorites);
+    } catch (error) {
+        console.error("Error fetching favorites:", error);
     }
 }
 
@@ -199,5 +239,36 @@ export async function fetchFavoriteImages(favorites) {
         }
     } catch (error) {
         console.error("Error fetching images:", error);
+    }
+}
+
+export async function toggleFavorite(imageId) {
+    const userData = get(user);
+    const currentFav = get(favorites);
+    const isFavorite = currentFav.has(imageId);
+    const method = isFavorite ? "DELETE" : "POST";
+
+    try {
+        await fetch("http://localhost:3000/favorite", {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_email: userData.email, image_id: imageId }),
+        });
+
+        // Correctly update the writable store
+        favorites.update((fav) => {
+            const updatedFavs = new Set(fav);
+            if (isFavorite) {
+                updatedFavs.delete(imageId);
+            } else {
+                updatedFavs.add(imageId);
+            }
+            // Save to localStorage
+            localStorage.setItem("favorites", JSON.stringify([...updatedFavs]));
+            return updatedFavs; // Return the updated value
+        });
+
+    } catch (error) {
+        console.error("Error toggling favorite:", error);
     }
 }

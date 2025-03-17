@@ -1,9 +1,9 @@
 <script>
   import { onMount } from "svelte";
   import {
-    user, images, selectedImage, selectedImageId, comments, commentText,
-    fetchUser, fetchImages, fetchComments,
-    openImage, closePreview, handleEditImage, handleDeleteImage, handleAddComment
+    user, images, selectedImage, selectedImageId, comments, commentText, favorites,
+    fetchUser, fetchImages, fetchComments, fetchFavorites,
+    openImage, closePreview, handleEditImage, handleDeleteImage, handleAddComment, toggleFavorite
   } from "../stores/gallery";
   import { goto } from "$app/navigation";
   import { fade } from "svelte/transition";
@@ -24,66 +24,8 @@
     handleEditImage();
     handleDeleteImage();
     handleAddComment();
+    toggleFavorite();
   });
-
-  // FAV
-  let favorites = new Set();
-
-  async function toggleFavorite(imageId) {
-    if (!user) return alert("Please log in to favorite images!");
-
-    const isFavorite = favorites.has(imageId);
-    const method = isFavorite ? "DELETE" : "POST";
-
-    try {
-      await fetch("http://localhost:3000/favorite", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
-      });
-
-      favorites = new Set(favorites);
-
-      if (isFavorite) {
-        favorites.delete(imageId);
-      } else {
-        favorites.add(imageId);
-      }
-
-      localStorage.setItem("favorites", JSON.stringify([...favorites]));
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-    }
-  }
-
-  async function fetchFavorites() {
-    if (!$user) return;
-
-    // โหลดค่าจาก localStorage
-    const storedFavorites = localStorage.getItem("favorites");
-    if (storedFavorites) {
-      favorites = new Set(JSON.parse(storedFavorites));
-    }
-
-    try {
-      const response = await fetch(
-        `http://localhost:3000/favorites/${encodeURIComponent($user.email)}`,
-      );
-      const data = await response.json();
-
-      if (data.favorites && Array.isArray(data.favorites)) {
-        favorites = new Set(
-          data.favorites.map((fav) => fav.image_id || fav.id),
-        );
-      } else {
-        console.error("Invalid favorites response:", data);
-      }
-
-      console.log("Updated favorites:", favorites);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-    }
-  }
 
   $user && console.log("Debugging User Store:", $user.id);
 
@@ -265,32 +207,53 @@
           </button>
         {/if}
 
-        <button
-          class="absolute right-15 bg-gray-800 rounded-lg hover:bg-gray-900 mt-16"
-          on:click|stopPropagation={() => toggleFavorite($selectedImageId)}
-        >
-          {#if favorites.has($selectedImageId)}
-            ❤️ Favorite
-          {:else}
-            🤍 Add To Favorite
-          {/if}
-        </button>
+        {#if $user}
+          <button
+            class="absolute right-15 bg-gray-800 rounded-lg hover:bg-gray-900 mt-16"
+            on:click|stopPropagation={() => toggleFavorite($selectedImageId)}>
+            {#if $favorites.has($selectedImageId)}
+              ❤️ Favorite
+            {:else}
+              🤍 Add To Favorite
+            {/if}
+          </button>
+        {/if}
 
         <p class="text-gray-300 pt-6 text-l">
           Category <span class="font-semibold">{$selectedImage.category}</span>
         </p>
 
         <hr class="my-4 border-gray-600" />
-        <p class="leading-relaxed text-xl">{$selectedImage.description}</p>
+        <p class="leading-relaxed text-md text-center p-5">{$selectedImage.description ? $selectedImage.description : "No description provided."}</p>
 
         <hr class="my-4 border-gray-600" />
         <div class="mt-5">
           <h3 class="text-3xl font-semibold">Comments</h3>
           <br />
+          {#if $user}
+            <textarea
+              class="w-full h-30 p-4 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
+              bind:value={$commentText}
+              placeholder="Add comment ..."
+            ></textarea>
+            <div class="flex justify-end mt-2 pb-8">
+              <button
+                class="mt-2 px-4 py-2 bg-blue-500 text-white rounded flex"
+                on:click={handleAddComment}>Add Comment</button
+              >
+            </div>
+          {:else}
+            <textarea
+              class="w-full h-30 p-4 my-5 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text"
+              placeholder="Please login before adding comment ..."
+              disabled
+            ></textarea>
+          {/if}
           {#each $comments as cm}
-            <p class="mt-2 text-lg">
-              ▪ <span class="ml-2">{cm.username}</span>
-              <span class="text-gray-500 ml-2 text-sm">({cm.user_email}) 
+            <p class="mt-2 text-lg flex items-center gap-x-2">
+              ▪ <img src={($user && cm.user_email === $user.email) ? $user.picture : (cm.userImg || "../../anonymous-icon.jpg")} alt={"Profile Picture"} class="w-9 h-9 rounded-full border-2 border-indigo-600">
+              <span class="font-semibold">{cm.username}</span>
+              <span class="text-gray-500 text-sm">
                 {new Date(cm.created_at).toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "2-digit",
@@ -302,27 +265,10 @@
                 })}
               </span>
             </p>
-            <p class="ml-5 text-md">{cm.comment}</p>
+            <p class="mt-3 ml-15 text-md">{cm.comment}</p>
           {/each}
           <br />
         </div>
-        {#if $user}
-          <textarea
-            class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
-            bind:value={$commentText}
-            placeholder="Add comment ..."
-          ></textarea>
-          <button
-            class="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-            on:click={handleAddComment}>Add Comment</button
-          >
-        {:else}
-          <textarea
-            class="w-full p-2 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text"
-            placeholder="Please login before adding comment ..."
-            disabled
-          ></textarea>
-        {/if}
       </div>
     </div>
   {/if}
