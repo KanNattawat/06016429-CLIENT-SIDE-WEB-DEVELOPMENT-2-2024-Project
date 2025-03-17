@@ -288,27 +288,27 @@
           <h3 class="text-3xl font-semibold">Comments</h3>
           <br />
           {#if $user}
-          <textarea
-            class="w-full h-30 p-4 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
-            bind:value={$commentText}
-            placeholder="Add comment ..."
-          ></textarea>
-          <div class="flex justify-end mt-2 pb-8">
-            <button
-              class="mt-2 px-4 py-2 bg-blue-500 text-white rounded flex"
-              on:click={handleAddComment}>Add Comment</button
-            >
-          </div>
-        {:else}
-          <textarea
-            class="w-full h-30 p-4 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text"
-            placeholder="Please login before adding comment ..."
-            disabled
-          ></textarea>
-        {/if}
+            <textarea
+              class="w-full h-30 p-4 mt-3 border rounded bg-gray-800 text-white placeholder-gray-400"
+              bind:value={$commentText}
+              placeholder="Add comment ..."
+            ></textarea>
+            <div class="flex justify-end mt-2 pb-8">
+              <button
+                class="mt-2 px-4 py-2 bg-blue-500 text-white rounded flex"
+                on:click={handleAddComment}>Add Comment</button
+              >
+            </div>
+          {:else}
+            <textarea
+              class="w-full h-30 p-4 my-5 border rounded bg-gray-800 text-white placeholder-gray-400 cursor-text"
+              placeholder="Please login before adding comment ..."
+              disabled
+            ></textarea>
+          {/if}
           {#each $comments as cm}
             <p class="mt-2 text-lg flex items-center gap-x-2">
-              ▪ <img src={cm.userImg || "../../anonymous-icon.jpg"} alt={"Profile Picture"} class="w-9 h-9 rounded-full border-2 border-indigo-600">
+              ▪ <img src={($user && cm.user_email === $user.email) ? $user.picture : (cm.userImg || "../../anonymous-icon.jpg")} alt={"Profile Picture"} class="w-9 h-9 rounded-full border-2 border-indigo-600">
               <span class="font-semibold">{cm.username}</span>
               <span class="text-gray-500 text-sm">
                 {new Date(cm.created_at).toLocaleDateString("en-GB", {

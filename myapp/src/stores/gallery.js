@@ -137,7 +137,6 @@ export async function fetchComments(image_id) {
     try {
         const response = await fetch(`http://localhost:3000/comments/${image_id}`);
         const data = await response.json();
-        console.log("Fetched comments:", data);
         comments.set(data.comments || []);
     } catch (error) {
         console.error("Error fetching comments:", error);
