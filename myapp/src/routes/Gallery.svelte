@@ -1,9 +1,9 @@
 <script>
   import { onMount } from "svelte";
   import {
-    user, images, selectedImage, selectedImageId, comments, commentText,
-    fetchUser, fetchImages, fetchComments,
-    openImage, closePreview, handleEditImage, handleDeleteImage, handleAddComment
+    user, images, selectedImage, selectedImageId, comments, commentText, favorites,
+    fetchUser, fetchImages, fetchComments, fetchFavorites,
+    openImage, closePreview, handleEditImage, handleDeleteImage, handleAddComment, toggleFavorite
   } from "../stores/gallery";
   import { goto } from "$app/navigation";
   import { fade } from "svelte/transition";
@@ -24,66 +24,8 @@
     handleEditImage();
     handleDeleteImage();
     handleAddComment();
+    toggleFavorite();
   });
-
-  // FAV
-  let favorites = new Set();
-
-  async function toggleFavorite(imageId) {
-    if (!user) return alert("Please log in to favorite images!");
-
-    const isFavorite = favorites.has(imageId);
-    const method = isFavorite ? "DELETE" : "POST";
-
-    try {
-      await fetch("http://localhost:3000/favorite", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_email: $user.email, image_id: imageId }),
-      });
-
-      favorites = new Set(favorites);
-
-      if (isFavorite) {
-        favorites.delete(imageId);
-      } else {
-        favorites.add(imageId);
-      }
-
-      localStorage.setItem("favorites", JSON.stringify([...favorites]));
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-    }
-  }
-
-  async function fetchFavorites() {
-    if (!$user) return;
-
-    // โหลดค่าจาก localStorage
-    const storedFavorites = localStorage.getItem("favorites");
-    if (storedFavorites) {
-      favorites = new Set(JSON.parse(storedFavorites));
-    }
-
-    try {
-      const response = await fetch(
-        `http://localhost:3000/favorites/${encodeURIComponent($user.email)}`,
-      );
-      const data = await response.json();
-
-      if (data.favorites && Array.isArray(data.favorites)) {
-        favorites = new Set(
-          data.favorites.map((fav) => fav.image_id || fav.id),
-        );
-      } else {
-        console.error("Invalid favorites response:", data);
-      }
-
-      console.log("Updated favorites:", favorites);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-    }
-  }
 
   $user && console.log("Debugging User Store:", $user.id);
 
@@ -265,16 +207,17 @@
           </button>
         {/if}
 
-        <button
-          class="absolute right-15 bg-gray-800 rounded-lg hover:bg-gray-900 mt-16"
-          on:click|stopPropagation={() => toggleFavorite($selectedImageId)}
-        >
-          {#if favorites.has($selectedImageId)}
-            ❤️ Favorite
-          {:else}
-            🤍 Add To Favorite
-          {/if}
-        </button>
+        {#if $user}
+          <button
+            class="absolute right-15 bg-gray-800 rounded-lg hover:bg-gray-900 mt-16"
+            on:click|stopPropagation={() => toggleFavorite($selectedImageId)}>
+            {#if $favorites.has($selectedImageId)}
+              ❤️ Favorite
+            {:else}
+              🤍 Add To Favorite
+            {/if}
+          </button>
+        {/if}
 
         <p class="text-gray-300 pt-6 text-l">
           Category <span class="font-semibold">{$selectedImage.category}</span>
