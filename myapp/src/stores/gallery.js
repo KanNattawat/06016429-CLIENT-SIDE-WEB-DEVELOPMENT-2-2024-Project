@@ -123,7 +123,8 @@ export async function handleDeleteImage() {
     }
 }
 
-export function openImage(url, id, name, description, category, owner_email, useremail) {
+export function openImage(url, id, name, description, category, owner_email) {
+    // console.log(url, id, name, description, category, owner_email);
     selectedImage.set({ url, id, name, description, category, owner_email });
     selectedImageId.set(id);
     fetchComments(id);
@@ -189,13 +190,12 @@ export async function handleAddComment() {
 
 export async function fetchFavorites() {
     const userData = get(user);
-
     if (!userData) return;
 
-    // load localStorage
+    // โหลด favorites จาก localStorage
     const storedFavorites = localStorage.getItem("favorites");
     if (storedFavorites) {
-        favorites = new Set(JSON.parse(storedFavorites));
+        favorites.set(new Set(JSON.parse(storedFavorites)));
     }
 
     try {
@@ -208,11 +208,12 @@ export async function fetchFavorites() {
             console.error("Invalid favorites response:", data);
         }
 
-        console.log("Updated favorites:", favorites);
+        console.log("Updated favorites:", get(favorites)); // ต้องใช้ get() เพื่อดึงค่า
     } catch (error) {
         console.error("Error fetching favorites:", error);
     }
 }
+
 
 export async function fetchFavoriteImages(favorites) {
     try {
@@ -255,7 +256,6 @@ export async function toggleFavorite(imageId) {
             body: JSON.stringify({ user_email: userData.email, image_id: imageId }),
         });
 
-        // Correctly update the writable store
         favorites.update((fav) => {
             const updatedFavs = new Set(fav);
             if (isFavorite) {
@@ -263,12 +263,13 @@ export async function toggleFavorite(imageId) {
             } else {
                 updatedFavs.add(imageId);
             }
-            // Save to localStorage
+            // บันทึกลง localStorage
             localStorage.setItem("favorites", JSON.stringify([...updatedFavs]));
-            return updatedFavs; // Return the updated value
+            return updatedFavs;
         });
 
     } catch (error) {
         console.error("Error toggling favorite:", error);
     }
 }
+
